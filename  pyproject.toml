@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygments-extensions"
+version = "0.1.0"
+description = "Additional lexers and helpers for Pygments"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "pygments-extensions contributors" }
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Text Processing"
+]
+dependencies = [
+  "Pygments>=2.10"
+]
+
+[project.urls]
+Homepage = "https://example.com/pygments-extensions"
+Source = "https://example.com/pygments-extensions/source"
+Issues = "https://example.com/pygments-extensions/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
