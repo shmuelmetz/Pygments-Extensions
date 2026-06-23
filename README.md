@@ -1,69 +1,48 @@
-# Pygments Extensions
+# pygments-extensions
 
-A collection of community‑maintained lexers that extend the Pygments syntax‑highlighting ecosystem.  
-This project provides high‑quality, fully‑tested lexers for languages and formats that are widely used but not yet supported in the Pygments core distribution.
+Custom lexers extending Pygments ([pygments.org](https://pygments.org/)), the Python syntax highlighting library.
 
-The goal is to offer a unified, platform‑agnostic home for new and emerging lexers, making them easy to install, easy to maintain, and easy to contribute to.
+## Purpose
 
----
+Several languages relevant to the author's work are absent from the Pygments distribution or have incomplete support. This project provides additional lexers for use in local tools, MediaWiki `<syntaxhighlight>` tags, and wherever Pygments is used as a highlighting engine.
 
-## Included Lexers
+## Languages
 
-This repository will host multiple lexers, including:
+## PL/I
 
-- **PL/I**
-- **ooRexx**
-- **ISPF formats**
-  - Panels  
-  - Messages  
-  - Skeletons  
-  - DTL
-- **Future lexers** (Contemplated)
-  - HLASM  
-  - JCL  
-  - CMS Pipelines  
-  - others as needed
+PL/I support existed in Pygments before a major rewrite and was not carried forward into the current codebase. This lexer restores that support.
 
-Each lexer is developed as a standalone module but maintained under a single project umbrella for consistency and long‑term support.
+## ooRexx
 
----
+Open Object Rexx lexer for syntax highlighting of ooRexx source.
 
-## Project Goals
+## Wikipedia deployment
 
-- Provide high‑quality lexers for under‑served languages and formats  
-- Maintain compatibility with upstream Pygments  
-- Support Wikimedia and other platforms that rely on Pygments  
-- Encourage community contributions  
-- Keep the project platform‑neutral and future‑proof
+Getting a new lexer into Wikipedia's `<syntaxhighlight>` tag requires working through several independent projects on different schedules:
 
----
+- Submit the lexer to upstream Pygments and get it merged
+- Wait for Pygments to cut a release containing the new lexer
+- Wait for Wikimedia to pick up the new Pygments release in its SyntaxHighlight extension
+- File a Phabricator task on [phabricator.wikimedia.org](https://phabricator.wikimedia.org/) asking Wikimedia to enable the new language tags
+- Wait for Wikimedia to deploy the tag enablement
 
-## Installation
+This project serves as a working home for the lexers during that process and as a standalone tool for local use in the meantime.
 
-The project will be published on PyPI once the initial lexers are finalized.
+## Platform
 
-```
-pip install pygments-extensions
-```
+The lexers target upstream Pygments and, through the Wikimedia deployment pipeline, Wikipedia's syntaxhighlight extension. The Rexx and ooRexx lexers also target submission to RexxLA. Other lexers may have different targets.
 
-(Placeholder — package not yet published.)
+## Collaboration
 
----
+Contributions and corrections are welcome. If you maintain lexers for languages not yet covered here, please open an issue or pull request, or incorporate whatever is useful into your own work.
 
-## Contributing
+## Author
 
-Contributions are welcome.  
-Each lexer lives in its own module with:
-
-- tests  
-- sample input files  
-- documentation  
-- style and naming conventions aligned with Pygments core
-
-Open an issue or pull request to propose new lexers or improvements.
-
----
+Shmuel (Seymour J. Metz) (שְׁמוּאֵל בֵּן ל״ביש)
+[smetz3@gmu.edu](mailto:smetz3@gmu.edu)
+[mason.gmu.edu/~smetz3](https://mason.gmu.edu/~smetz3)
+GitHub: [shmuelmetz](https://github.com/shmuelmetz)
 
 ## License
 
-MIT License (same as Pygments).
+[MIT](LICENSE)
