@@ -8,13 +8,19 @@ Several languages relevant to the author's work are absent from the Pygments dis
 
 ## Languages
 
+### Current focus
+
 ## PL/I
 
-PL/I support existed in Pygments before a major rewrite and was not carried forward into the current codebase. This lexer restores that support.
+Pygments has never shipped a PL/I lexer (confirmed against its lexer registry and commit history) — this is a from-scratch build, not a restoration.
 
 ## ooRexx
 
-Open Object Rexx lexer for syntax highlighting of ooRexx source.
+Open Object Rexx lexer for syntax highlighting of ooRexx source. Built as a fork/extension of Pygments' existing classic-Rexx lexer (`pygments.lexers.scripting.RexxLexer`), which covers a useful subset of shared syntax already.
+
+### Future direction
+
+Other lexers have been discussed for this project — including ISPF panels/messages/skeletons/DTL and other mainframe-adjacent languages (HLASM, NetRexx, Regina Rexx) — and some scaffolding for them (entry points, an earlier draft README) already exists in this repo. They are not being worked on yet; PL/I and ooRexx are the current priority. This section will grow as that work starts.
 
 ## Wikipedia deployment
 
@@ -27,6 +33,16 @@ Getting a new lexer into Wikipedia's `<syntaxhighlight>` tag requires working th
 - Wait for Wikimedia to deploy the tag enablement
 
 This project serves as a working home for the lexers during that process and as a standalone tool for local use in the meantime.
+
+## Community awareness
+
+Getting a lexer merged and deployed is a technical pipeline; getting it *used* also depends on the people who actually write PL/I and ooRexx knowing it exists. This is an explicit step, not an afterthought of "write code and submit upstream":
+
+- **ooRexx**: [RexxLA](https://www.rexxla.org/) (the Rexx Language Association) is the natural point of contact — ooRexx is itself a RexxLA project. Useful both before and after a working lexer exists: real-world source samples for the test suite are worth asking for early; an announcement and request for review/testing once there's something concrete to show.
+- **PL/I**: the right community/forum is not yet identified with confidence and needs its own verification pass when the time comes (candidates to check rather than assume: IBM's PL/I user communities/forums, any active PL/I mailing lists or newsgroups, compiler-vendor user groups) — this project's own PL/I lexer has no legacy Pygments code to point to, so real-world sample source will matter even more here than for ooRexx.
+- **Pygments / Wikimedia**: already implied by the deployment pipeline above, but worth doing deliberately rather than just filing the PR and Phabricator task silently — e.g. flagging the work in progress to Pygments' own contributor channels before the PR lands, so reviewers aren't seeing it cold.
+
+What "aware" means in practice will firm up once each lexer is far enough along to actually show — this section will get more specific then.
 
 ## Platform
 
