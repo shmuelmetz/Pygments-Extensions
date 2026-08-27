@@ -1,0 +1,21 @@
+/* PACKAGE statement sample, for lexer sample/testing purposes.
+   Structure mirrors IBM's own documented PACKAGE syntax (package-name:
+   PACKAGE EXPORTS(...) RESERVES(...); ... END package-name;) but with
+   original content, not IBM's worked example. */
+
+MathTools: PACKAGE EXPORTS(Square) RESERVES(Counter);
+
+    DCL Counter FIXED BINARY(31) EXTERNAL STATIC;
+
+    Square: PROCEDURE(N) RETURNS(FIXED BINARY(31));
+        DCL N FIXED BINARY(31);
+        Counter = Counter + 1;
+        RETURN(N * N);
+    END Square;
+
+    Cube: PROCEDURE(N) RECURSIVE RETURNS(FIXED BINARY(31));
+        DCL N FIXED BINARY(31);
+        RETURN(N * N * N);
+    END Cube;
+
+END MathTools;

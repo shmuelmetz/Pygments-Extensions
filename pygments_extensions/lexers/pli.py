@@ -33,8 +33,11 @@ Updated: 2026-05-14 per IBM's own docs), not reconstructed from memory:
   NONCONNECTED, DEFINED, POSITION, INITIAL); and individually-confirmed
   pages for ALIGNED/UNALIGNED, INTERNAL/EXTERNAL, BUILTIN, CONDITION,
   GENERIC, and VALUE. This attribute list is NOT claimed exhaustive --
-  PL/I has attributes (e.g. LIKE) not confirmed against a page during
-  this pass -- but every name present here is sourced, not guessed.
+  PL/I has attributes (e.g. LIKE, and RECURSIVE -- spotted used in a
+  real worked example on the "Packages" page while checking PACKAGE
+  coverage, but not separately chased down to its own attribute page
+  during this pass) not confirmed against a page yet -- but every name
+  present here is sourced, not guessed.
 
 Not pursued, per explicit user direction: the formal language standards
 (ANSI X3.53-1976 / ISO 6160:1979; ANSI X3.74-1981 and X3.74-1987 Subset
@@ -272,6 +275,25 @@ class PLILexer(RegexLexer):
                         # real reserved words -- "into" directly confirmed
                         # in IBM's own example: "read file(In) into(Input)".
                         "to", "by", "from", "into",
+                        # PACKAGE-statement clause keywords, confirmed on
+                        # IBM's "Packages" chapter
+                        # (https://www.ibm.com/docs/en/SSY2V3_6.2/lr/lsh-package.html),
+                        # whose syntax diagram and worked example use both
+                        # -- "package-name: PACKAGE EXPORTS(...)
+                        # RESERVES(...) OPTIONS(...); ... END package-name;".
+                        # No dedicated lexer state is needed for PACKAGE the
+                        # way ooRexx's ::CLASS/::METHOD needed one: unlike
+                        # those, PACKAGE has no distinguishing sigil and no
+                        # qualified-name/member-access syntax (it's a pure
+                        # block-scoping construct -- exported names are
+                        # referenced as ordinary external procedure names,
+                        # not package.procedure-style) -- it uses the exact
+                        # same generic keyword-statement grammar as
+                        # PROCEDURE/DO/BEGIN, already handled. %PACKAGE is
+                        # NOT a real distinct directive -- confirmed absent
+                        # from the complete alphabetic "Statements and
+                        # directives" index already pulled (see above).
+                        "exports", "reserves",
                     ),
                     suffix=r"\b",
                 ),

@@ -238,6 +238,43 @@ def test_locator_qualifier_operators(lexer):
     assert (Operator, "=>") in toks
 
 
+def test_package_statement_keywords(lexer):
+    # PACKAGE/EXPORTS/RESERVES: confirmed on IBM's "Packages" chapter
+    # (https://www.ibm.com/docs/en/SSY2V3_6.2/lr/lsh-package.html) --
+    # user-flagged coverage gap (EXPORTS/RESERVES had no test and
+    # weren't even in the keyword list before this pass). PACKAGE has no
+    # qualified-name/member-access syntax to test -- confirmed on that
+    # same page, it's a pure block-scoping construct like BEGIN/
+    # PROCEDURE, not a namespace with dotted member access -- so plain
+    # keyword tokenization is genuinely sufficient here, unlike ooRexx's
+    # ::CLASS/::METHOD which needed a dedicated directive state.
+    toks = _tokens_no_whitespace(lexer, "MathTools: PACKAGE EXPORTS(Square) RESERVES(Counter);")
+    assert (Keyword.Reserved, "PACKAGE") in toks
+    assert (Keyword.Reserved, "EXPORTS") in toks
+    assert (Keyword.Reserved, "RESERVES") in toks
+
+
+def test_packagename_bif(lexer):
+    # PACKAGENAME: confirmed present in IBM's alphabetic BIF list
+    # (already sourced in test_bif_from_sourced_list's list generally --
+    # this spot-checks the package-specific one the user asked about).
+    toks = _tokens_no_whitespace(lexer, "PACKAGENAME()")
+    assert (Name.Builtin, "PACKAGENAME") in toks
+
+
+def test_no_percent_package_directive_exists(lexer):
+    # %PACKAGE is not a real distinct construct -- confirmed absent from
+    # the complete alphabetic "Statements and directives" index already
+    # sourced (see pli.py's module docstring). The generic "%[a-z_]\w*"
+    # preprocessor rule tokenizes it as Comment.Preproc regardless of
+    # the specific name, which is the correct/only handling needed for
+    # any %-directive, real or not -- this test just confirms that
+    # generic rule doesn't error out on this specific (nonexistent)
+    # spelling.
+    toks = _tokens_no_whitespace(lexer, "%PACKAGE;")
+    assert (Comment.Preproc, "%PACKAGE") in toks
+
+
 def test_alternate_not_equal_spelling(lexer):
     # <> is a documented alternate spelling of ¬=, confirmed on both the
     # "Priority of operators" table and the compound-assignment table.
