@@ -67,11 +67,19 @@ def test_bracket_message_send(lexer):
     assert (Operator, "]") in toks
 
 
-def test_dot_class_reference(lexer):
+def test_dot_environment_symbol_lookup(lexer):
+    # A leading dot means "look this up in the environment directory",
+    # not "this is a class" -- .true/.false/.nil live in the same
+    # directory as .array and user-defined classes, so .array and
+    # .MyClass must tokenize identically (both are the same syntactic
+    # construct, a directory lookup).
     toks = _tokens_no_whitespace(lexer, ".array~new")
-    assert (Name.Class, ".array") in toks
+    assert (Name.Variable.Global, ".array") in toks
     # Confirm it's a single token, not split into Operator(".") + Text("array").
     assert (Operator, ".") not in toks
+
+    toks = _tokens_no_whitespace(lexer, ".MyClass~new")
+    assert (Name.Variable.Global, ".MyClass") in toks
 
 
 def test_classic_rexx_constructs_still_work(lexer):

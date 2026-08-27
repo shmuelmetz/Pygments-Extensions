@@ -24,9 +24,17 @@ What's new here, specific to the object-oriented layer ooRexx adds:
   message-send semantics. See AI-Priming/ooRexx/RULES.md, "Indirect/
   computed stem access: three forms" for the full three-way distinction
   this is drawn from.
-* Dot-prefixed class references (``.array``, ``.string``, ``.true``,
-  ``.MyClass``), tokenized as a single ``Name.Class`` token rather than
-  falling through to a bare Operator("." ) + Text(name) split.
+* Dot-prefixed environment-directory symbol lookups (``.array``,
+  ``.string``, ``.true``, ``.MyClass``). A leading dot does not itself
+  mean "this is a class" -- it designates a lookup of the following name
+  in ooRexx's environment directory, the special symbol table holding
+  ``.true``/``.false``/``.nil``, built-in classes like ``.array``,
+  user-defined classes, and other environment entries alike. Classes are
+  commonly what's found there, but the syntax is a general directory
+  lookup, not class-specific syntax -- so this is tokenized as a single
+  ``Name.Variable.Global`` token (a directory is effectively a global
+  symbol table) rather than as ``Name.Class``, and rather than falling
+  through to a bare Operator(".") + Text(name) split.
 * The additional OO keywords these features bring along: ``guard``,
   ``expose``, ``forward``, ``use``, ``self``, ``super``.
 
@@ -90,11 +98,14 @@ class OORexxLexer(RegexLexer):
                 r"options|resource|package)\b",
                 bygroups(Keyword.Namespace, Whitespace, Keyword.Declaration),
             ),
-            # Dot-prefixed class/object references: .array, .string,
-            # .true, .false, .nil, .MyClass, etc. Placed before the
-            # generic operator rule so the leading "." doesn't get
-            # split off on its own as a bare Operator token.
-            (r"\.[a-z_]\w*", Name.Class),
+            # Dot-prefixed environment-directory symbol lookups: .array,
+            # .string, .true, .false, .nil, .MyClass, etc. The dot means
+            # "look this up in the environment directory", not "this is
+            # a class" -- classes are commonly, but not exclusively,
+            # what's found there. Placed before the generic operator
+            # rule so the leading "." doesn't get split off on its own
+            # as a bare Operator token.
+            (r"\.[a-z_]\w*", Name.Variable.Global),
             # Message-send operators. ~~ (cascading send) must be
             # listed before ~ since RegexLexer tries rules in order and
             # takes the first match, not the longest.
@@ -190,9 +201,10 @@ class OORexxLexer(RegexLexer):
         Prefer this lexer over classic RexxLexer specifically when OO
         markers are present: a ``::`` directive is unambiguous (classic
         Rexx never uses one), a ``~`` message send is a strong signal,
-        and ``.name~`` (a class reference immediately sent a message) is
-        a corroborating one. A plain classic-Rexx-looking file with none
-        of these should score 0 here and fall through to RexxLexer.
+        and ``.name~`` (an environment-directory symbol immediately sent
+        a message) is a corroborating one. A plain classic-Rexx-looking
+        file with none of these should score 0 here and fall through to
+        RexxLexer.
         """
         if re.search(r"/\*\**\s*(oorexx|object rexx)", text, re.IGNORECASE):
             return 1.0
