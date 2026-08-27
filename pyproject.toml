@@ -54,10 +54,10 @@ Issues = "https://github.com/<your-username>/pygments-extensions/issues"
 # ------------------------------------------------------------
 [project.entry-points."pygments.lexers"]
 oorexx = "pygments_extensions.lexers.oorexx:OORexxLexer"
+pli = "pygments_extensions.lexers.pli:PLILexer"
 
 # Not implemented yet -- see README.md for current-vs-future scope.
 # Uncomment each line as its module is actually written.
-# pli = "pygments_extensions.lexers.pli:PLILexer"
 # ispf_panel = "pygments_extensions.lexers.ispf_panel:ISPFPanelLexer"
 # ispf_message = "pygments_extensions.lexers.ispf_message:ISPFMessageLexer"
 # ispf_skeleton = "pygments_extensions.lexers.ispf_skeleton:ISPFSkeletonLexer"

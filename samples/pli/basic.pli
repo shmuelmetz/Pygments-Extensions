@@ -1,0 +1,39 @@
+/* Basic PL/I sample, for lexer sample/testing purposes. */
+
+MAIN: PROCEDURE OPTIONS(MAIN);
+    DCL NAME CHAR(80) VARYING;
+    DCL COUNT FIXED BINARY(31);
+    DCL FLAG BIT(1);
+    DCL MASK BIT(8);
+    DCL RATIO FIXED DECIMAL(5,2);
+
+    MASK = '10110100'B;
+    FLAG = '1'B;
+    COUNT = 0;
+    RATIO = 3.14;
+
+    IF ¬FLAG THEN
+        PUT LIST('flag is off');
+    ELSE DO;
+        PUT LIST('flag is on');
+    END;
+
+    /* alternate NOT-sign representation, real-world source uses this
+       when ¬ isn't conveniently typeable */
+    IF ^FLAG THEN
+        PUT LIST('still off');
+
+    NAME = 'O''Brien';   /* doubled quote is an escaped apostrophe */
+
+LOOP: DO COUNT = 1 TO 10;
+        PUT LIST(COUNT);
+    END LOOP;
+
+    CALL SUBR(NAME);
+
+END MAIN;
+
+SUBR: PROCEDURE(N);
+    DCL N CHAR(*) VARYING;
+    PUT LIST(SUBSTR(N, 1, 4));
+END SUBR;
