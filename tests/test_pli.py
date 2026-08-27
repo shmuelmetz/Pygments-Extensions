@@ -110,6 +110,50 @@ def test_attribute_from_sourced_list(lexer):
     # separately confirmed, so this isn't expected to match yet.
 
 
+def test_define_statement_family_covered(lexer):
+    # DEFINE/ALIAS/STRUCTURE/ORDINAL: user-flagged double-check that a
+    # real but lesser-known PL/I addition wasn't missed. All four words
+    # are covered (DEFINE/ALIAS via the keyword list, STRUCTURE/ORDINAL
+    # via the attribute list, since those two are also attribute names
+    # in their own right) -- split across two token types, but every
+    # word highlights as something other than plain Text.
+    toks = _tokens_no_whitespace(lexer, "DEFINE ALIAS Foo Bar;")
+    assert (Keyword.Reserved, "DEFINE") in toks
+    assert (Keyword.Reserved, "ALIAS") in toks
+
+    toks = _tokens_no_whitespace(lexer, "DEFINE STRUCTURE Point ...;")
+    assert (Keyword.Type, "STRUCTURE") in toks
+
+    toks = _tokens_no_whitespace(lexer, "DEFINE ORDINAL Color ...;")
+    assert (Keyword.Type, "ORDINAL") in toks
+
+
+def test_compound_assignment_operators(lexer):
+    # Newer Enterprise PL/I addition, confirmed on "Compound assignment
+    # statements" -- missed in the first vocabulary pass, added after a
+    # specific double-check for newer extensions.
+    for op in ("+=", "-=", "*=", "/=", "|=", "&=", "||=", "**="):
+        toks = _tokens_no_whitespace(lexer, f"X {op} 1;")
+        assert (Operator, op) in toks, f"{op} not tokenized as one Operator"
+
+
+def test_locator_qualifier_operators(lexer):
+    # Newer Enterprise PL/I addition, confirmed on "Expressions and
+    # references" (locator-qualifier syntax for pointer/handle-based
+    # member access).
+    toks = _tokens_no_whitespace(lexer, "P->Field")
+    assert (Operator, "->") in toks
+    toks = _tokens_no_whitespace(lexer, "H=>Field")
+    assert (Operator, "=>") in toks
+
+
+def test_alternate_not_equal_spelling(lexer):
+    # <> is a documented alternate spelling of ¬=, confirmed on both the
+    # "Priority of operators" table and the compound-assignment table.
+    toks = _tokens_no_whitespace(lexer, "A <> B")
+    assert (Operator, "<>") in toks
+
+
 def test_statement_keyword_from_sourced_list(lexer):
     # ALLOCATE: confirmed on IBM's "Statements and directives" index.
     toks = _tokens_no_whitespace(lexer, "ALLOCATE x;")

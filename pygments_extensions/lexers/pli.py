@@ -48,6 +48,22 @@ IBM/ANSI archive -- the vocabulary below should be cross-checked against
 them and revised where IBM's current vendor extensions diverge from the
 standard.
 
+Newer-extension double-check: a follow-up pass specifically looked for
+statements/operators that might have been under-weighted by leaning on
+general/classic-1976-era PL/I recall rather than purely the current 6.2
+docs index, since IBM's Enterprise PL/I has grown considerably since
+then. DEFINE (and ALIAS/STRUCTURE/ORDINAL) were already present --
+DEFINE/ALIAS in the statement-keyword list, STRUCTURE/ORDINAL in the
+attribute list, since those two words are also attribute names in their
+own right. What the first pass genuinely missed, found by following up
+on "Compound assignment statements" (a page title the statement index
+itself surfaced, but whose contents weren't followed into at the time)
+and "Expressions and references": the compound assignment operators
+(+=, -=, *=, /=, |=, &=, ||=, **=) and the locator-qualifier operators
+(->, =>) -- both real Enterprise PL/I additions beyond the classic
+operator set, now added to the "operator" state below with their
+sourcing.
+
 NOT operator (settled, sourced independently of the above): IBM
 Enterprise PL/I for z/OS 6.2 Language Reference, "Special characters"
 table -- ¬ has default EBCDIC hex 5F / default ASCII hex 5E (the same
@@ -148,7 +164,28 @@ class PLILexer(RegexLexer):
             (r"[a-z_]\w*", Text),
         ],
         "operator": [
-            (r"\*\*|\|\||[-+*/=<>&|.,;()]", Operator),
+            # Compound assignment operators (+=, -=, *=, /=, |=, &=,
+            # ||=, **=) and the locator-qualifier operators (->, =>,
+            # pointer/handle-based member access, e.g. p->field) are
+            # real IBM Enterprise PL/I additions confirmed directly
+            # against current docs -- "Compound assignment statements"
+            # (https://www.ibm.com/docs/en/epfz/6.2.0?topic=statements-compound-assignment)
+            # and "Expressions and references"
+            # (https://www.ibm.com/docs/en/epfz/6.2.0?topic=reference-expressions-references).
+            # Longer sequences must be ordered before their own
+            # prefixes (e.g. "**=" before "**" before "*=" before "*"),
+            # since RegexLexer takes the first list entry that matches,
+            # not the longest.
+            (r"\*\*=|\*\*", Operator),
+            (r"\|\|=|\|\|", Operator),
+            (r"->|=>", Operator),
+            # <> is a documented alternate spelling of ¬= (not-equal in
+            # ordinary comparisons; "exclusive-or and assign" in the
+            # compound-assignment table specifically) -- confirmed on
+            # both of the pages cited above.
+            (r"<>", Operator),
+            (r"[-+*/|&]=", Operator),
+            (r"[-+*/=<>&|.,;()]", Operator),
         ],
         "attribute": [
             # DCL attribute keywords -- see module docstring for the
