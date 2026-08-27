@@ -1,12 +1,13 @@
 """
 Tests for the PL/I lexer.
 
-Scope note: these tests cover the parts of the lexer that are settled
-(comments, strings, bit/hex constants, numbers, the NOT operator) plus
-basic structural sanity (no Error tokens on the sample file). They do
-NOT assert on the full DCL-attribute/keyword/BIF vocabulary, since that
-list is still a draft pending cross-check against the formal PL/I
-standards -- see pli.py's module docstring.
+Covers the settled parts (comments, strings, bit/hex constants, numbers,
+the NOT operator), basic structural sanity (no Error tokens on the
+sample file), and spot checks on the DCL-attribute/statement-keyword/BIF
+vocabulary sourced from IBM's current Enterprise PL/I for z/OS 6.2 docs
+(see pli.py's module docstring for the specific page each list is drawn
+from -- not exhaustively re-tested here, but a representative sample
+from each of the three sourced lists).
 
 Run with: pytest tests/test_pli.py
 (requires the dev extra: pip install -e .[dev])
@@ -18,6 +19,8 @@ import pytest
 from pygments.token import (
     Comment,
     Error,
+    Keyword,
+    Name,
     Number,
     Operator,
     String,
@@ -89,6 +92,41 @@ def test_negated_comparison_operators_not_split(lexer):
     toks = _tokens_no_whitespace(lexer, "A ¬= B")
     assert (Operator, "¬=") in toks
     assert (Operator, "¬") not in toks
+
+
+def test_bif_from_sourced_list(lexer):
+    # SUBSTR: confirmed on IBM's alphabetic BIF page (see module
+    # docstring for the URL).
+    toks = _tokens_no_whitespace(lexer, "SUBSTR(x, 1, 4)")
+    assert (Name.Builtin, "SUBSTR") in toks
+
+
+def test_attribute_from_sourced_list(lexer):
+    # VARYING: confirmed on IBM's "Data attributes" category index.
+    toks = _tokens_no_whitespace(lexer, "DCL x CHAR(80) VARYING;")
+    assert (Keyword.Type, "VARYING") in toks
+    assert (Keyword.Type, "CHAR") not in toks  # "CHAR" isn't the listed
+    # spelling -- IBM's list has "CHARACTER"; abbreviations aren't
+    # separately confirmed, so this isn't expected to match yet.
+
+
+def test_statement_keyword_from_sourced_list(lexer):
+    # ALLOCATE: confirmed on IBM's "Statements and directives" index.
+    toks = _tokens_no_whitespace(lexer, "ALLOCATE x;")
+    assert (Keyword.Reserved, "ALLOCATE") in toks
+
+
+def test_and_or_not_are_symbols_not_keywords(lexer):
+    # Real correction from an earlier draft: PL/I's logical AND/OR/NOT
+    # are the symbols &, |, ¬ -- not word-form keywords like "and"/"or"/
+    # "not". Confirm the lexer doesn't (re-)introduce word-keyword
+    # tokenization for these.
+    toks = _tokens_no_whitespace(lexer, "a & b | ¬c")
+    assert (Keyword.Reserved, "and") not in toks
+    assert (Keyword.Reserved, "or") not in toks
+    assert (Operator, "&") in toks
+    assert (Operator, "|") in toks
+    assert (Operator, "¬") in toks
 
 
 def test_sample_file_lexes_without_error(lexer):
