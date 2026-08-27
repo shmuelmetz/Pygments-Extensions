@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A collection of community-maintained lexers extending the Pygments syntax-highlighting ecosystem."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { text = "MIT" }
+license = "MIT"
 authors = [
     { name = "Your Name" }
 ]
@@ -30,7 +30,6 @@ keywords = [
 
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Topic :: Text Processing :: Filters",
     "Topic :: Text Processing :: Markup",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -43,16 +42,26 @@ Issues = "https://github.com/<your-username>/pygments-extensions/issues"
 # ------------------------------------------------------------
 # Entry points: this is how Pygments discovers your lexers.
 # Each lexer you add will need an entry here.
+#
+# IMPORTANT: only list entries for modules that actually exist. Confirmed
+# by direct testing: Pygments' plugin loader (find_plugin_lexers) eagerly
+# imports *every* registered entry point as soon as *any* lexer is looked
+# up by name (get_lexer_by_name), not just the one being requested. A
+# stub entry for a module that doesn't exist yet breaks lookup for every
+# other lexer in this package too, not just itself. Keep not-yet-built
+# lexers commented out here (they're still real future scope -- see
+# README.md "Future direction" -- just not wired up until implemented).
 # ------------------------------------------------------------
 [project.entry-points."pygments.lexers"]
-pli = "pygments_extensions.lexers.pli:PLILexer"
 oorexx = "pygments_extensions.lexers.oorexx:OORexxLexer"
-ispf_panel = "pygments_extensions.lexers.ispf_panel:ISPFPanelLexer"
-ispf_message = "pygments_extensions.lexers.ispf_message:ISPFMessageLexer"
-ispf_skeleton = "pygments_extensions.lexers.ispf_skeleton:ISPFSkeletonLexer"
-ispf_dtl = "pygments_extensions.lexers.ispf_dtl:ISPFDTLLexer"
 
-# Add future lexers here:
+# Not implemented yet -- see README.md for current-vs-future scope.
+# Uncomment each line as its module is actually written.
+# pli = "pygments_extensions.lexers.pli:PLILexer"
+# ispf_panel = "pygments_extensions.lexers.ispf_panel:ISPFPanelLexer"
+# ispf_message = "pygments_extensions.lexers.ispf_message:ISPFMessageLexer"
+# ispf_skeleton = "pygments_extensions.lexers.ispf_skeleton:ISPFSkeletonLexer"
+# ispf_dtl = "pygments_extensions.lexers.ispf_dtl:ISPFDTLLexer"
 # hlasm = "pygments_extensions.lexers.hlasm:HLASMLexer"
 # jcl = "pygments_extensions.lexers.jcl:JCLLexer"
 
@@ -66,6 +75,13 @@ dev = [
     "black",
     "ruff",
 ]
+
+[tool.setuptools.packages.find]
+# Flat layout: without this, setuptools' auto-discovery also picks up
+# samples/ (example .rex/.pli files, not Python) as a second top-level
+# "package" and refuses to build at all. Confirmed by an actual
+# `pip install -e .` failure before this was added.
+include = ["pygments_extensions*"]
 
 [tool.black]
 line-length = 88
