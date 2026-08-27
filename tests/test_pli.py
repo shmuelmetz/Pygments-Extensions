@@ -24,6 +24,7 @@ from pygments.token import (
     Number,
     Operator,
     String,
+    Text,
     Whitespace,
 )
 
@@ -92,6 +93,96 @@ def test_negated_comparison_operators_not_split(lexer):
     toks = _tokens_no_whitespace(lexer, "A ¬= B")
     assert (Operator, "¬=") in toks
     assert (Operator, "¬") not in toks
+
+
+def test_not_sign_as_prefix_unary(lexer):
+    # This test exercises ¬ specifically in its prefix/unary position
+    # (logical NOT). ¬ genuinely ALSO has a separate, real infix
+    # position with a different meaning (bitwise XOR) -- see
+    # test_infix_not_sign_is_bitwise_xor below, sourced to IBM's "Bit
+    # operations" page. This test only claims that the prefix use, on
+    # its own, produces one clean token. ¬A must be a single "¬"
+    # Operator token immediately followed by identifier A -- not
+    # combined with A, and not accidentally consuming any part of it.
+    toks = _tokens_no_whitespace(lexer, "¬A")
+    assert toks[0] == (Operator, "¬")
+    assert (Text, "A") in toks
+    assert (Operator, "¬A") not in toks
+
+
+def test_infix_not_sign_is_bitwise_xor(lexer):
+    # ¬ genuinely has TWO distinct meanings depending on grammatical
+    # position -- this is stated outright, not inferred by analogy, in
+    # IBM's Enterprise PL/I 6.2 Language Reference, "Bit operations"
+    # (https://www.ibm.com/docs/en/epfz/6.2.0?topic=expressions-bit-operations),
+    # Table 1 "Logical operators for bit operations": ¬ is listed as
+    # usable both "As prefix operator" (Yes, = logical NOT) and "As a
+    # infix operator" (Yes, = bitwise exclusive-or). Confirmed by that
+    # page's own worked example (Table 3), reused here as the operand
+    # values: for A = '010111'B, B = '111111'B, "A ¬ B" yields
+    # '101000'B. A lexer only tokenizes, it doesn't evaluate -- so this
+    # test confirms standalone infix ¬ is one Operator token distinct
+    # from its operands and from the unrelated ¬=/¬</¬> atomic-operator
+    # family, not that pytest itself computes the XOR.
+    toks = _tokens_no_whitespace(lexer, "A ¬ B")
+    assert (Operator, "¬") in toks
+    assert (Operator, "¬=") not in toks
+    assert (Operator, "¬<") not in toks
+    assert (Operator, "¬>") not in toks
+
+    # The exact worked example from IBM's Table 3, same operand values.
+    toks = _tokens_no_whitespace(lexer, "'010111'B ¬ '111111'B")
+    ops = [v for t, v in toks if t is Operator]
+    assert ops.count("¬") == 1
+
+
+def test_not_sign_prefix_does_not_swallow_adjacent_equals(lexer):
+    # The specific worry: does the bare prefix-¬ rule greedily grab a
+    # following "=" that isn't actually adjacent to it in the source
+    # (¬A=B has a variable name between ¬ and =, so ¬ and = must NOT
+    # merge into ¬=)? Confirmed by direct token inspection, not just
+    # reasoning about rule order.
+    toks = _tokens_no_whitespace(lexer, "¬A=B")
+    assert (Operator, "¬") in toks
+    assert (Operator, "=") in toks
+    assert (Operator, "¬=") not in toks
+
+
+def test_negated_less_than_operator(lexer):
+    # ¬< is its own atomic operator symbol ("not less than"), part of a
+    # family (¬=, ¬<, ¬>) unrelated to the separate, real infix-¬-as-XOR
+    # sense documented in test_infix_not_sign_is_bitwise_xor above --
+    # ¬< is a distinct two-character symbol that happens to incorporate
+    # the ¬ glyph, the same way "<=" is one atomic operator despite
+    # containing "<". ¬< is documented alongside ¬= and ¬> in IBM's
+    # "Priority of operators" table (Table 1, priority group 5) --
+    # already fetched and on hand, not re-guessed.
+    toks = _tokens_no_whitespace(lexer, "X ¬< Y")
+    assert (Operator, "¬<") in toks
+    assert (Operator, "¬") not in toks
+
+
+def test_negated_greater_than_operator(lexer):
+    # ¬>: its own atomic operator symbol ("not greater than"), same
+    # relationship to ¬ as ¬< above. Same source as ¬< above.
+    toks = _tokens_no_whitespace(lexer, "X ¬> Y")
+    assert (Operator, "¬>") in toks
+    assert (Operator, "¬") not in toks
+
+
+def test_prefix_not_and_the_negated_relational_operators_together(lexer):
+    # One expression exercising the real prefix use of ¬ (NOT) alongside
+    # all three separate atomic operators that happen to incorporate its
+    # glyph (¬=, ¬<, ¬>) -- confirming the lexer doesn't confuse them
+    # with each other. This is deliberately NOT exercising the separate
+    # infix-¬-as-XOR sense (see test_infix_not_sign_is_bitwise_xor for
+    # that) -- the two facts are unrelated and both real.
+    toks = _tokens_no_whitespace(lexer, "¬A & (B ¬= C) & (D ¬< E) & (F ¬> G)")
+    ops = [v for t, v in toks if t is Operator]
+    assert ops.count("¬") == 1  # only the genuine prefix use
+    assert "¬=" in ops
+    assert "¬<" in ops
+    assert "¬>" in ops
 
 
 def test_bif_from_sourced_list(lexer):

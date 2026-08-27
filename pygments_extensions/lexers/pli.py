@@ -78,6 +78,27 @@ glyph assignment at that same 0x5E code position -- documented as
 up-arrow-vs-caret contention, not confirmed specifically as
 NOT-sign-vs-caret -- predating any EBCDIC-conversion-artifact framing.)
 
+¬ genuinely has two distinct meanings depending on grammatical position
+-- this is not an analogy or a guess, it is stated outright in IBM's
+Enterprise PL/I 6.2 Language Reference, "Bit operations"
+(https://www.ibm.com/docs/en/epfz/6.2.0?topic=expressions-bit-operations),
+Table 1 "Logical operators for bit operations": ¬ is listed as usable
+both "As prefix operator" (Yes) and "As a infix operator" (Yes) --
+prefix ¬ means logical NOT, infix ¬ (bare ¬ between two operands, e.g.
+"A ¬ B") means bitwise exclusive-or (XOR), confirmed by that page's
+worked example (Table 3): for A = '010111'B, B = '111111'B, "A ¬ B"
+yields '101000'B. This is a completely separate fact from, and unrelated
+to, the atomic ¬=/¬</¬> negated-relational operators below -- those
+remain three distinct operator symbols that happen to incorporate the ¬
+glyph, not a second sense of "infix ¬". This lexer's tokenization already
+handles both senses correctly as a side effect of how the rules are
+ordered: a bare ¬ not immediately followed by =/</> falls through to a
+single generic Operator("¬") token regardless of whether it sits in
+prefix or infix position -- disambiguating NOT from XOR is a parser-level
+concern (position-dependent), not something the lexer needs to do, the
+same way "-" tokenizes identically whether it's unary minus or binary
+subtraction.
+
 Known overlap, not a bug: some words are both a DCL attribute and a BIF
 name in real PL/I (e.g. BINARY, FIXED, CHARACTER are attributes in a
 DECLARE and also type-conversion functions when called like BINARY(x)).
@@ -149,10 +170,17 @@ class PLILexer(RegexLexer):
             # it can cross a newline and swallow a token meant for the
             # following line.
             (r"([a-z_]\w*)([ \t]*)(:)", bygroups(Name.Label, Whitespace, Punctuation)),
-            # NOT operator: settled per the module docstring above. ¬=,
-            # ¬<, ¬> (negated comparisons) must be listed before the
-            # bare comparison operators below, and before the bare NOT
-            # rule, so they aren't split into NOT + "=".
+            # ¬/^: settled per the module docstring above. ¬=, ¬<, ¬>
+            # (the atomic negated-relational operators) must be listed
+            # before the bare ¬/^ rule, so they aren't split into two
+            # tokens. The final bare rule below is intentionally
+            # position-agnostic: it matches ¬ (or ^) whenever not
+            # immediately followed by =/</>, which covers BOTH real
+            # grammatical positions ¬ has -- prefix (logical NOT) and
+            # infix (bitwise XOR, e.g. "A ¬ B") -- as a single generic
+            # Operator token either way. Disambiguating which semantic
+            # meaning applies is a parser-level, position-dependent
+            # concern, not a lexer one.
             (r"[¬^]=", Operator),
             (r"[¬^]<", Operator),
             (r"[¬^]>", Operator),
