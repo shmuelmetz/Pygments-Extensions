@@ -1,0 +1,28 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/nkimotou/PLI/blob/main/General/file_procedures.pli
+Project: nkimotou/PLI (an individual GitHub author's small collection
+         of PL/I examples)
+License: MIT (per the source repo's own LICENSE file, Copyright (c)
+         2024 Nanami Kimoto). Retained here under those terms as part
+         of pygments-extensions' own real-world lexer validation
+         corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+MAIN: PROCEDURE OPTIONS(MAIN);
+/* declarations */
+    DECLARE INFILE FILE IN, OUTFILE FILE OUT;
+    DECLARE IN_FILENAME CHAR(50) INIT('input.txt'), OUT_FILENAME CHAR(50) INIT('output.txt');
+    DECLARE LINE CHAR(100);
+    /* procedure */
+    INFILE = INFILE(IN_FILENAME);
+    OUTFILE = OUTFILE(OUT_FILENAME);
+    /* perform loop */
+    DO WHILE(NOT(EOF(INFILE)));
+        GET FILE INFILE INTO LINE;
+        PUT FILE OUTFILE LINE;
+    /* end procedure */
+    END;
+
+    PUT SKIP LIST('File copied successfully!');
+/* end program */
+END MAIN;

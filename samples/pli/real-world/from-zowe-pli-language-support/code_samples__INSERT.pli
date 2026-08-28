@@ -1,0 +1,23 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/zowe/zowe-pli-language-support/blob/development/code_samples/INSERT.pli
+Project: Zowe PL/I Language Support (IBM/Zowe's real-world PL/I
+         language-server tooling project; per its own code_samples/
+         README, sourced from IBM PL/I for z/OS V6.1/6.2 with the IBA
+         Group Enterprise PL/I compiler)
+License: Eclipse Public License 2.0 (EPL-2.0). Retained here under
+         those terms as part of pygments-extensions' own real-world
+         lexer validation corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+ INSERT: PROC OPTIONS(MAIN);
+
+   EXEC SQL INCLUDE SQLCA;
+
+   EXEC SQL
+   INSERT INTO STUDENT
+   (FIRST_NAME,SECOND_NAME,AVG_MARK,GROUP_NUMBER)
+   VALUES ('Igor','Egorov',NULL,'1');
+
+   PUT SKIP LIST(SQLCA.SQLCODE);
+
+ END;

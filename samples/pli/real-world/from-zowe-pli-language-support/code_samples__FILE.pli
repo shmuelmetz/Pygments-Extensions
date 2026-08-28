@@ -1,0 +1,62 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/zowe/zowe-pli-language-support/blob/development/code_samples/FILE.pli
+Project: Zowe PL/I Language Support (IBM/Zowe's real-world PL/I
+         language-server tooling project; per its own code_samples/
+         README, sourced from IBM PL/I for z/OS V6.1/6.2 with the IBA
+         Group Enterprise PL/I compiler)
+License: Eclipse Public License 2.0 (EPL-2.0). Retained here under
+         those terms as part of pygments-extensions' own real-world
+         lexer validation corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+ EXAMPLE: PROC OPTIONS(MAIN);
+
+   DCL 1 REC_INP,
+     2 NAME   CHAR(10),
+     2 COUNT  CHAR(2),
+     2 FILL   CHAR(68);
+
+   DCL I            FIXED BIN(31);
+   DCL APPLE_COUNT  FIXED BIN(31) INIT(0);
+   DCL CARROT_COUNT FIXED BIN(31) INIT(0);
+   DCL CHERRY_COUNT FIXED BIN(31) INIT(0);
+   DCL TOMATO_COUNT FIXED BIN(31) INIT(0);
+   DCL INPFILE FILE RECORD INPUT;
+   DCL OUTFILE FILE RECORD OUTPUT;
+   DCL OUTPUTLINE CHAR(80) INIT('');
+   DCL EOF BIT(1) INIT('0'B);
+
+   ON ENDFILE (INPFILE)
+     EOF = '1'B;
+
+   OPEN FILE (INPFILE);
+   OPEN FILE (OUTFILE);
+
+   READ FILE (INPFILE) INTO (REC_INP);
+
+   DO WHILE (^EOF);
+     SELECT(REC_INP.NAME);
+       WHEN('APPLE')  APPLE_COUNT=APPLE_COUNT+REC_INP.COUNT;
+       WHEN('CARROT') CARROT_COUNT=CARROT_COUNT+REC_INP.COUNT;
+       WHEN('CHERRY') CHERRY_COUNT=CHERRY_COUNT+REC_INP.COUNT;
+       WHEN('TOMATO') TOMATO_COUNT=TOMATO_COUNT+REC_INP.COUNT;
+       OTHERWISE
+         PUT SKIP LIST('Unexpected order ',REC_INP.NAME);
+     END;
+     READ FILE (INPFILE) INTO (REC_INP);
+   END;
+
+   CALL FILEWRITE('Apples   quantity: '||APPLE_COUNT);
+   CALL FILEWRITE('Carrots  quantity: '||CARROT_COUNT);
+   CALL FILEWRITE('Cherries quantity: '||CHERRY_COUNT);
+   CALL FILEWRITE('Tomatoes quantity: '||TOMATO_COUNT);
+
+   CLOSE FILE(INPFILE);
+   CLOSE FILE(OUTFILE);
+
+   FILEWRITE: PROC(LINE);
+     DCL LINE CHAR(80);
+     WRITE FILE(OUTFILE) FROM(LINE);
+   END;
+
+ END;

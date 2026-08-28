@@ -1,0 +1,33 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/nkimotou/PLI/blob/main/General/REVERSE_STRING.pli
+Project: nkimotou/PLI (an individual GitHub author's small collection
+         of PL/I examples)
+License: MIT (per the source repo's own LICENSE file, Copyright (c)
+         2024 Nanami Kimoto). Retained here under those terms as part
+         of pygments-extensions' own real-world lexer validation
+         corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+REVERSE_STRING: PROCEDURE (INPUT_STRING CHAR(*)) RETURNS(CHAR(*));
+    /* Declarations */
+    DECLARE OUTPUT_STRING CHAR(*);
+    DECLARE I FIXED BINARY(31);
+
+    OUTPUT_STRING = '';
+    /* Loop through characters */
+    DO I = LENGTH(INPUT_STRING) TO 1 BY -1;
+        OUTPUT_STRING = OUTPUT_STRING || SUBSTR(INPUT_STRING, I, 1);
+    END;
+    /* Return string */
+    RETURN(OUTPUT_STRING);
+END REVERSE_STRING;
+
+MAIN: PROCEDURE OPTIONS(MAIN);
+    /* Declarations */
+    DECLARE INPUT_STRING CHAR(100), REVERSED_STRING CHAR(100);
+    INPUT_STRING = 'Hello, world!';
+    REVERSED_STRING = REVERSE_STRING(INPUT_STRING);
+    /* Print reversed string details */
+    PUT SKIP LIST('Original string:', INPUT_STRING);
+    PUT SKIP LIST('Reversed string:', REVERSED_STRING);
+END MAIN;
