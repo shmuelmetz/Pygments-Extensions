@@ -32,6 +32,12 @@ Open Object Rexx lexer for syntax highlighting of ooRexx source. Built as a fork
 
 Other lexers have been discussed for this project — including ISPF panels/messages/skeletons/DTL and other mainframe-adjacent languages (HLASM, NetRexx, Regina Rexx) — and some scaffolding for them (entry points, an earlier draft README) already exists in this repo. They are not being worked on yet; PL/I and ooRexx are the current priority. This section will grow as that work starts.
 
+## Pre-submission checklist against Pygments' own requirements
+
+Checked directly against Pygments' lexer-development docs (2026-08-28), not assumed. Both lexers already meet the hard structural requirements: `name`, `aliases`, and `filenames` are all correctly defined on both `OORexxLexer` and `PLILexer` (`mimetypes = []` on both is normal, not a gap — plenty of accepted lexers have no registered MIME type). One real gap, not yet closed:
+
+- **Test format**: Pygments requires new-lexer tests in its own golden-file format — `tests/snippets/<lexer_alias>/*.txt`, generated/verified via `tox -- --update-goldens`, or `tests/examplefiles/` for larger files — and states plainly: "Lexers which can't be tested will not be accepted." This project's existing tests (`tests/test_oorexx.py`, `tests/test_pli.py`, 41 passing) are solid pytest-style coverage for this repo's own purposes, but aren't in Pygments' required format and won't satisfy their PR checks as-is. Converting is a real, concrete pre-submission task — best done once real-world sample validation (in progress) has settled what the test cases should actually cover, rather than converting now and redoing it after.
+
 ## Wikipedia deployment
 
 Getting a new lexer into Wikipedia's `<syntaxhighlight>` tag requires working through several independent projects on different schedules:
