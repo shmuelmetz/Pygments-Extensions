@@ -14,7 +14,15 @@ Several languages relevant to the author's work are absent from the Pygments dis
 
 Pygments itself has never shipped a PL/I lexer — confirmed directly against its lexer registry, its full CHANGES history, and a commit-message search of its entire history, all turning up nothing. As far as Pygments is concerned, this is a from-scratch build, not a restoration.
 
-That said, PL/I syntax highlighting **did** once work on Wikipedia — just not through Pygments. MediaWiki's `SyntaxHighlight` extension is still literally named `SyntaxHighlight_GeSHi` internally, a fossil from its actual history: it ran on [GeSHi](https://github.com/GeSHi/geshi-1.0) (a PHP syntax highlighter) before switching to a Pygments backend, and GeSHi's own language files include a real `pli.php` (confirmed directly in its repo). So PL/I highlighting on Wikipedia was a real, working feature once, lost specifically in the GeSHi-to-Pygments switch — this project is restoring a capability Wikipedia used to have, even though it's new to Pygments itself. Worth using in outreach messaging: "restoring what Wikipedia lost" is a stronger hook than "brand new, nobody asked."
+That said, PL/I syntax highlighting **did** once work on Wikipedia — just not through Pygments. MediaWiki's `SyntaxHighlight` extension is still literally named `SyntaxHighlight_GeSHi` internally, a fossil from its actual history: it ran on [GeSHi](https://github.com/GeSHi/geshi-1.0) (a PHP syntax highlighter) before switching to a Pygments backend, and GeSHi's own language files include a real `pli.php` (confirmed directly in its repo). Checked further than the name fossil alone: in the extension's pre-Pygments source (GitHub mirror, branch `REL1_19`, ~2012-era MediaWiki, confirmed genuinely GeSHi-backed by its own README referencing "GeSHi 1.0.8.10"), `SyntaxHighlight_GeSHi.class.php` auto-discovered every supported language straight from GeSHi's own bundled files with no separate whitelist:
+
+```php
+foreach( glob( GESHI_LANG_ROOT . "/*.php" ) as $file ) {
+    self::$languages[] = basename( $file, '.php' );
+}
+```
+
+No curation step existed to have left `pli.php` out — whatever GeSHi shipped, Wikipedia exposed automatically via `<syntaxhighlight lang="pli">`. So PL/I highlighting on Wikipedia was a real, working feature once, lost specifically in the GeSHi-to-Pygments switch — this project is restoring a capability Wikipedia used to have, even though it's new to Pygments itself. Worth using in outreach messaging: "restoring what Wikipedia lost" is a stronger hook than "brand new, nobody asked."
 
 ## ooRexx
 
