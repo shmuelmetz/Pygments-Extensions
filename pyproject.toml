@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
-    { name = "Your Name" }
+    { name = "Shmuel (Seymour J.) Metz", email = "smetz3@gmu.edu" }
 ]
 
 dependencies = [
@@ -36,8 +36,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/<your-username>/pygments-extensions"
-Issues = "https://github.com/<your-username>/pygments-extensions/issues"
+Homepage = "https://github.com/shmuelmetz/pygments-extensions"
+Issues = "https://github.com/shmuelmetz/pygments-extensions/issues"
 
 # ------------------------------------------------------------
 # Entry points: this is how Pygments discovers your lexers.

@@ -11,7 +11,7 @@ Please read these guidelines before submitting a pull request.
 
 1. Clone the repository:
    ```
-   git clone https://github.com/<your-username>/pygments-extensions
+   git clone https://github.com/shmuelmetz/pygments-extensions
    ```
 2. Create and activate a virtual environment.
 3. Install development dependencies:
@@ -46,11 +46,11 @@ ispf_panel.py
 
 ### Class Naming
 
-Use `CamelCase` ending in `Lexer`:
+Use `CamelCase` ending in `Lexer` (matching the actual classes already in this repo):
 
 ```
 class PLILexer(RegexLexer):
-class ooRexxLexer(RegexLexer):
+class OORexxLexer(RegexLexer):
 class ISPFPanelLexer(RegexLexer):
 ```
 
@@ -93,11 +93,13 @@ tokens = {
 
 Every lexer must include tests.
 
-Place tests in:
+For this project's own development, place tests in:
 
 ```
 tests/test_<lexername>.py
 ```
+
+**Important, checked directly against Pygments' own docs (2026-08-28):** this pytest-style format is this project's own convention, not Pygments' upstream requirement. Pygments itself requires new-lexer tests in its own golden-file format instead — `tests/snippets/<lexer_alias>/*.txt`, generated/verified via `tox -- --update-goldens`, or `tests/examplefiles/` for larger files — and states plainly that lexers which can't be tested this way won't be accepted upstream. Converting our tests to that format is a real, separate pre-submission step, not something this project's own test suite already satisfies just by "following Pygments conventions" in spirit.
 
 Tests should:
 
