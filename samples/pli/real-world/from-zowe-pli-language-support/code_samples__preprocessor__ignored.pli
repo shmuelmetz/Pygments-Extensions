@@ -1,0 +1,23 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/zowe/zowe-pli-language-support/blob/development/code_samples/preprocessor/ignored.pli
+Project: Zowe PL/I Language Support (IBM/Zowe's real-world PL/I
+         language-server tooling project; per its own code_samples/
+         README, sourced from IBM PL/I for z/OS V6.1/6.2 with the IBA
+         Group Enterprise PL/I compiler)
+License: Eclipse Public License 2.0 (EPL-2.0). Retained here under
+         those terms as part of pygments-extensions' own real-world
+         lexer validation corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+ /* Skipping */
+ 
+ IGNO: PROCEDURE OPTIONS (MAIN);
+    %SKIP (2);
+    dcl A fixed bin(31);
+    dcl B fixed bin(31);
+    dcl WHAT fixed bin(31);  
+    WHAT = 123;
+    
+    // skipped declaration not available
+    /* B = 123; */
+ END;

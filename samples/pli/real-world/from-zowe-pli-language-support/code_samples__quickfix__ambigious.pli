@@ -1,0 +1,23 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/zowe/zowe-pli-language-support/blob/development/code_samples/quickfix/ambigious.pli
+Project: Zowe PL/I Language Support (IBM/Zowe's real-world PL/I
+         language-server tooling project; per its own code_samples/
+         README, sourced from IBM PL/I for z/OS V6.1/6.2 with the IBA
+         Group Enterprise PL/I compiler)
+License: Eclipse Public License 2.0 (EPL-2.0). Retained here under
+         those terms as part of pygments-extensions' own real-world
+         lexer validation corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+ GERT1: PROCEDURE OPTIONS (MAIN);
+  DCL 1 A BASED(ADDR(X)),
+        5 B BIN FIXED(31), 
+          6 C (CT REFER(C)),  /*lacks quick fix */
+           10* CHAR(1);  
+
+
+ DCL 1 AA BASED(ADDR(X)),
+        5 B BIN FIXED(31), 
+          6 C (CT REFER(B));  /*lacks quick fix */  
+
+ END GERT1;

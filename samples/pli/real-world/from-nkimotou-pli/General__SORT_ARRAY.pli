@@ -1,0 +1,46 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/nkimotou/PLI/blob/main/General/SORT_ARRAY.pli
+Project: nkimotou/PLI (an individual GitHub author's small collection
+         of PL/I examples)
+License: MIT (per the source repo's own LICENSE file, Copyright (c)
+         2024 Nanami Kimoto). Retained here under those terms as part
+         of pygments-extensions' own real-world lexer validation
+         corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+SORT_ARRAY: PROCEDURE (ARRAY CHAR(*)) RETURNS(CHAR(*));
+    /* declarations */
+    DECLARE NUM_ARRAY CHAR(*), SORTED_ARRAY CHAR(*);
+    DECLARE TEMP FIXED BINARY(31), I FIXED BINARY(31), J FIXED BINARY(31), MIN_INDEX FIXED BINARY(31);
+    
+    NUM_ARRAY = ARRAY;
+    SORTED_ARRAY = '';
+    /* procedure */
+    DO I = 1 TO LENGTH(NUM_ARRAY) BY 2;
+        MIN_INDEX = I;
+
+        DO J = I + 2 TO LENGTH(NUM_ARRAY) BY 2;
+            IF SUBSTR(NUM_ARRAY, J, 2) < SUBSTR(NUM_ARRAY, MIN_INDEX, 2) THEN
+                MIN_INDEX = J;
+        END;
+
+        IF MIN_INDEX ≠ I THEN
+            DO;
+                TEMP = SUBSTR(NUM_ARRAY, I, 2);
+                SUBSTR(NUM_ARRAY, I, 2) = SUBSTR(NUM_ARRAY, MIN_INDEX, 2);
+                SUBSTR(NUM_ARRAY, MIN_INDEX, 2) = TEMP;
+            END;
+    END;
+
+    RETURN(NUM_ARRAY);
+/* end procedure */
+END SORT_ARRAY;
+
+MAIN: PROCEDURE OPTIONS(MAIN);
+    DECLARE INPUT_ARRAY CHAR(100), SORTED_ARRAY CHAR(100);
+    INPUT_ARRAY = '3, 1, 4, 1, 5, 9, 2, 6, 5';
+    SORTED_ARRAY = SORT_ARRAY(INPUT_ARRAY);
+    PUT SKIP LIST('Original array:', INPUT_ARRAY);
+    PUT SKIP LIST('Sorted array:', SORTED_ARRAY);
+/* end program */
+END MAIN;

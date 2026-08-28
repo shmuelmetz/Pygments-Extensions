@@ -1,0 +1,52 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/nkimotou/PLI/blob/main/systems/mainframe.pli
+Project: nkimotou/PLI (an individual GitHub author's small collection
+         of PL/I examples)
+License: MIT (per the source repo's own LICENSE file, Copyright (c)
+         2024 Nanami Kimoto). Retained here under those terms as part
+         of pygments-extensions' own real-world lexer validation
+         corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+/* PL/I Program for Mainframe Batch Processing */
+
+/* Declare the file variables */
+DECLARE INPUT_FILE FILE INPUT;
+DECLARE OUTPUT_FILE FILE OUTPUT;
+
+/* Declare the structure of a record */
+DECLARE 1 DATA_RECORD,
+           2 ID        FIXED BIN(15),
+           2 NAME      CHAR(20),
+           2 BALANCE   FIXED DEC(9,2);
+
+/* Declare variables for reading and writing */
+DCL INPUT_RECORD  LIKE DATA_RECORD;
+DCL OUTPUT_RECORD LIKE DATA_RECORD;
+
+/* Main procedure */
+PROC MAIN;
+
+    /* Open the files */
+    OPEN FILE(INPUT_FILE) TITLE('INPUT.DAT');
+    OPEN FILE(OUTPUT_FILE) TITLE('OUTPUT.DAT');
+
+    /* Read records from the input file, process them, and write to the output file */
+    DO WHILE (SYSIN(01) = '1');
+        /* Read a record from the input file */
+        READ FILE(INPUT_FILE) INTO(INPUT_RECORD);
+
+        /* Process the record - for example, increase the balance by 10% */
+        OUTPUT_RECORD.ID = INPUT_RECORD.ID;
+        OUTPUT_RECORD.NAME = INPUT_RECORD.NAME;
+        OUTPUT_RECORD.BALANCE = INPUT_RECORD.BALANCE * 1.10;
+
+        /* Write the processed record to the output file */
+        WRITE FILE(OUTPUT_FILE) FROM(OUTPUT_RECORD);
+    END;
+
+    /* Close the files */
+    CLOSE FILE(INPUT_FILE);
+    CLOSE FILE(OUTPUT_FILE);
+
+END MAIN;

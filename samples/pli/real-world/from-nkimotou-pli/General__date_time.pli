@@ -1,0 +1,19 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/nkimotou/PLI/blob/main/General/date_time.pli
+Project: nkimotou/PLI (an individual GitHub author's small collection
+         of PL/I examples)
+License: MIT (per the source repo's own LICENSE file, Copyright (c)
+         2024 Nanami Kimoto). Retained here under those terms as part
+         of pygments-extensions' own real-world lexer validation
+         corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+MAIN: PROCEDURE OPTIONS(MAIN);
+    /* Declarations */
+    DECLARE CURRENT_DATE CHAR(10), CURRENT_TIME CHAR(8);
+    CURRENT_DATE = DATE('MDY');
+    CURRENT_TIME = TIME('HMS');
+    /* Print details of date and time */
+    PUT SKIP LIST('Current date:', CURRENT_DATE);
+    PUT SKIP LIST('Current time:', CURRENT_TIME);
+END MAIN;

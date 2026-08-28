@@ -1,0 +1,27 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://github.com/zowe/zowe-pli-language-support/blob/development/code_samples/preprocessor/note.pli
+Project: Zowe PL/I Language Support (IBM/Zowe's real-world PL/I
+         language-server tooling project; per its own code_samples/
+         README, sourced from IBM PL/I for z/OS V6.1/6.2 with the IBA
+         Group Enterprise PL/I compiler)
+License: Eclipse Public License 2.0 (EPL-2.0). Retained here under
+         those terms as part of pygments-extensions' own real-world
+         lexer validation corpus; see samples/pli/real-world/README.md.
+----------------------------------------------------------------------------*/
+ REPL: PROC;
+   %REPLACE A BY 67;
+   %REPLACE B BY 34;
+
+   /*
+   page 623 - Lang.Ref
+   If code has a value other than those listed above, a diagnostic 
+   message is produced and a default
+  value is taken. If the value is less than 0 or greater than 16, severity
+   U is the default. Otherwise, the next lower severity is the default.
+   */
+   %NOTE('A+B = ', (A+B));
+
+   %REPLACE NAME WITH 'ENE';
+   %NOTE('aHOJ ', NAME);
+ END;
