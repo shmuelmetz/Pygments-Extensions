@@ -1,0 +1,29 @@
+/* PL/I preprocessor ("macro facility") sample, for lexer sample/testing
+   purposes. Demonstrates %DECLARE, %IF/%THEN/%ELSE, a %DO/%END
+   compile-time loop, %INCLUDE, %NOTE, the %null statement, and a
+   preprocessor procedure (%PROCEDURE...%END) whose body uses bare,
+   non-%-prefixed keywords per IBM's own documented convention for
+   macro-procedure bodies. Original content, not copied from IBM's docs. */
+
+%DECLARE Debug FIXED;
+%Debug = 1;
+
+%IF Debug %THEN
+    %DECLARE TraceLevel FIXED;
+%ELSE
+    %DECLARE TraceLevel FIXED;
+
+%DO I = 1 TO 3;
+    %NOTE 'generated helper ' || I;
+%END;
+
+%INCLUDE CommonDecls;
+
+%;
+
+SquareText: %PROCEDURE(X);
+    IF X < 0 THEN
+        RETURN('0');
+    ELSE
+        RETURN(X || '*' || X);
+%END;

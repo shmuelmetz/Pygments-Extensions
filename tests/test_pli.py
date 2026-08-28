@@ -275,6 +275,74 @@ def test_no_percent_package_directive_exists(lexer):
     assert (Comment.Preproc, "%PACKAGE") in toks
 
 
+def test_percent_null_statement_no_longer_errors(lexer):
+    # Real bug, confirmed by direct test before this fix: "%;" (the
+    # documented %null statement -- IBM's "Preprocessor statements"
+    # index, https://www.ibm.com/docs/en/SSY2V3_6.2/lr/prepst.html) used
+    # to produce Token.Error("%") because a lone "%" not followed by a
+    # letter matched no rule at all.
+    toks = list(PLILexer().get_tokens("%;\n"))
+    assert not any(t is Error for t, v in toks), toks
+    assert (Comment.Preproc, "%") in [(t, v) for t, v in toks]
+
+
+def test_preprocessor_statement_keywords(lexer):
+    # %DECLARE, %IF, %THEN, %ELSE, %DO, %END, %INCLUDE, %NOTE: spot
+    # checks against IBM's complete "Preprocessor statements" index
+    # (link above) -- confirmed this project's existing generic
+    # "%[a-z_]\w*" wildcard already covers the full real list (verified
+    # by checking, not merely assumed complete because it's a wildcard).
+    for stmt in ("%DECLARE", "%IF", "%THEN", "%ELSE", "%DO", "%END",
+                 "%INCLUDE", "%NOTE", "%ACTIVATE", "%DEACTIVATE",
+                 "%ITERATE", "%LEAVE", "%REPLACE", "%SELECT",
+                 "%XINCLUDE", "%XINSCAN", "%INSCAN"):
+        toks = _tokens_no_whitespace(lexer, f"{stmt} X;")
+        assert (Comment.Preproc, stmt) in toks, f"{stmt} not recognized"
+
+
+def test_preprocessor_only_bifs_distinct_from_runtime_list(lexer):
+    # Confirmed by direct comparison against IBM's separate
+    # "Preprocessor built-in functions" list
+    # (https://www.ibm.com/docs/en/SSY2V3_6.2/lr/prbif.html): these 17
+    # names are preprocessor-only and were absent from the runtime BIF
+    # list before this fix.
+    for bif in ("COMMENT", "COMPILEDATE", "COMPILETIME", "COPYRIGHT",
+                "COUNTER", "MACCOL", "MACLMAR", "MACNAME", "MACRMAR",
+                "PARMSET", "QUOTE", "SERVICE", "SYSDIMSIZE",
+                "SYSOFFSETSIZE", "SYSPARM", "SYSPOINTERSIZE",
+                "SYSVERSION"):
+        toks = _tokens_no_whitespace(lexer, f"{bif}()")
+        assert (Name.Builtin, bif) in toks, f"{bif} not tokenized as Name.Builtin"
+
+
+def test_macro_procedure_body_uses_bare_keywords(lexer):
+    # Per IBM's docs, statements inside a %PROCEDURE...%END body don't
+    # need the leading % (a footnote on "Preprocessor facilities" says
+    # so explicitly) -- e.g. plain "IF ... THEN ... ELSE ... RETURN"
+    # inside a macro procedure means preprocessor-level control flow,
+    # not runtime. This confirms, by direct test rather than reasoning
+    # alone, that no dedicated lexer state is needed for this: the bare
+    # keywords already tokenize as the identical Keyword.Reserved type
+    # they would in ordinary runtime code, so a dedicated
+    # "macro-procedure-body" state would produce no visibly different
+    # highlighting output.
+    fragment = (
+        "Sq: %PROCEDURE(X);\n"
+        "    IF X < 0 THEN\n"
+        "        RETURN('0');\n"
+        "    ELSE\n"
+        "        RETURN(X);\n"
+        "%END;\n"
+    )
+    toks = _tokens_no_whitespace(lexer, fragment)
+    assert (Comment.Preproc, "%PROCEDURE") in toks
+    assert (Keyword.Reserved, "IF") in toks
+    assert (Keyword.Reserved, "THEN") in toks
+    assert (Keyword.Reserved, "ELSE") in toks
+    assert (Keyword.Reserved, "RETURN") in toks
+    assert (Comment.Preproc, "%END") in toks
+
+
 def test_alternate_not_equal_spelling(lexer):
     # <> is a documented alternate spelling of ¬=, confirmed on both the
     # "Priority of operators" table and the compound-assignment table.

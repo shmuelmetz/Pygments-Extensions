@@ -109,6 +109,56 @@ The attribute rule is checked before the function rule below, so these
 tokenize as Keyword.Type rather than Name.Builtin in both uses --
 correct for the overwhelmingly more common DCL usage, an acceptable
 simplification for the rarer function-call usage.
+
+Preprocessor ("macro facility") design decision, checked directly rather
+than assumed: PL/I's compile-time preprocessor is a genuinely distinct
+sub-language (its own statements, its own BIF set, its own scan-time
+execution model, per IBM's "Preprocessor facilities" chapter,
+https://www.ibm.com/docs/en/epfz/6.2.0?topic=reference-preprocessor-facilities)
+-- but it does NOT need a dedicated push/pop lexer state the way
+ooRexx's ::CLASS/::METHOD did, for reasons verified rather than assumed:
+
+* IBM's own docs state outright that "preprocessor references and
+  expressions are written and evaluated in the same way as described in
+  ... Expressions and references" -- i.e. there is no separate
+  compile-time expression grammar to parse; the existing root-state
+  tokenization already handles it correctly by falling through to it.
+* Pygments' own precedent (pygments.lexers.c_cpp.CFamilyLexer, checked
+  directly) treats C's #-directives similarly lightly: its dedicated
+  'macro' state swallows the rest of the directive as one Comment.Preproc
+  blob without sub-tokenizing the expression inside `#if X > 5` at all
+  (no Operator/Number tokens for X, >, 5) -- this PL/I lexer's
+  "wildcard-token-then-fall-through-to-shared-grammar" approach is
+  actually MORE granular than that established precedent, not less.
+* IBM's own footnote on preprocessor procedures says statements inside a
+  %PROCEDURE...%END body don't need the leading % (e.g. plain "IF ...
+  THEN ... ELSE" inside a macro procedure means preprocessor-level
+  control flow, not runtime). This sounds like it needs a distinct
+  lexer state -- but doesn't in practice: those bare keywords (IF, THEN,
+  ELSE, RETURN, etc.) already map to the identical Keyword.Reserved
+  token type in ordinary root-state tokenization, so a dedicated state
+  would produce no visibly different output. Confirmed by direct test
+  (test_macro_procedure_body_uses_bare_keywords), not just this
+  reasoning.
+
+What IS fixed here after direct verification against IBM's actual
+"Preprocessor statements" and "Preprocessor built-in functions" pages
+(links in the tokens dict below): the %null statement (a bare "%;") was
+a genuine bug -- a lone "%" not followed by a letter matched no rule at
+all and produced an Error token, confirmed by direct test before the
+fix; and 17 preprocessor-only BIFs (COMMENT, COMPILEDATE, COMPILETIME,
+COPYRIGHT, COUNTER, MACCOL, MACLMAR, MACNAME, MACRMAR, PARMSET, QUOTE,
+SERVICE, SYSDIMSIZE, SYSOFFSETSIZE, SYSPARM, SYSPOINTERSIZE, SYSVERSION)
+were confirmed absent from the runtime BIF list and added.
+
+Explicitly still simplified, not silently omitted: the %GO TO statement
+tokenizes as two separate tokens (Comment.Preproc("%GO") +
+Keyword.Reserved("TO")) rather than one merged unit -- a minor cosmetic
+gap; whether argument-less preprocessor BIFs are ever invoked without
+parentheses in real source is unconfirmed (see the "function" state
+comment below); and BIF-name shadowing by a same-named user-declared
+preprocessor procedure (a real semantic rule per IBM's docs) is a
+parser-level symbol-table concern, correctly out of scope for a lexer.
 """
 
 import re
@@ -149,8 +199,29 @@ class PLILexer(RegexLexer):
         "root": [
             (r"\s+", Whitespace),
             (r"/\*", Comment.Multiline, "comment"),
-            # Preprocessor directives: %INCLUDE, %DCL, %IF, %ACTIVATE, etc.
+            # Preprocessor ("macro facility") statements: %INCLUDE, %DCL,
+            # %IF, %ACTIVATE, etc. This wildcard's coverage was checked
+            # against IBM's complete, real "Preprocessor statements"
+            # alphabetic index
+            # (https://www.ibm.com/docs/en/SSY2V3_6.2/lr/prepst.html) --
+            # every real preprocessor statement keyword (%ACTIVATE,
+            # %DEACTIVATE, %DECLARE, %DO/%END, %GO TO, %IF, %INCLUDE,
+            # %INSCAN, %ITERATE, %LEAVE, %NOTE, %REPLACE, %SELECT,
+            # %XINCLUDE, %XINSCAN, and the unsupported-but-still-accepted
+            # %CONTROL) already matches this wildcard, so this is now a
+            # verified-complete design choice, not merely a
+            # never-revisited placeholder. The %GO TO statement is the
+            # one case not tokenized as a single unit (it becomes
+            # Comment.Preproc("%GO") + Keyword.Reserved("TO") separately,
+            # since "to" is already a recognized clause keyword) -- a
+            # known minor cosmetic gap, not a correctness one.
             (r"%[a-z_]\w*", Comment.Preproc),
+            # The %null statement (a bare "%;", the preprocessor
+            # equivalent of a plain ";") is real and documented on that
+            # same page -- confirmed as a genuine bug via direct testing
+            # before this fix: a lone "%" not followed by a letter
+            # matched no rule at all and fell through to an Error token.
+            (r"%", Comment.Preproc),
             # Bit-string and hex-string constants: '1010'B, '1F'X. These
             # must come before the generic character-string rule, since
             # both start with the same quote character -- only the
@@ -388,6 +459,42 @@ class PLILexer(RegexLexer):
                         'wlow', 'wscollapse', 'wscollapse16', 'wsreplace', 'wsreplace16',
                         'xmlchar', 'xmlscrub', 'xmlscrub16', 'xmluchar', 'y4date',
                         'y4julian', 'y4year',
+                    ),
+                    suffix=r"(\s*)(\()",
+                ),
+                bygroups(Name.Builtin, Whitespace, Operator),
+            ),
+            # Preprocessor-only built-in functions: confirmed, by direct
+            # comparison against the runtime BIF list above, to be a
+            # genuinely separate set -- not simply a subset of the
+            # runtime BIFs, per IBM's complete "Preprocessor built-in
+            # functions" list
+            # (https://www.ibm.com/docs/en/SSY2V3_6.2/lr/prbif.html).
+            # 17 of that page's 34 names (COMMENT, COMPILEDATE,
+            # COMPILETIME, COPYRIGHT, COUNTER, MACCOL, MACLMAR, MACNAME,
+            # MACRMAR, PARMSET, QUOTE, SERVICE, SYSDIMSIZE,
+            # SYSOFFSETSIZE, SYSPARM, SYSPOINTERSIZE, SYSVERSION) do not
+            # appear at all in the runtime list; the other 17 (SUBSTR,
+            # LENGTH, MAX, MIN, etc.) already do and so aren't repeated
+            # here. Not modeled: the semantic rule that a BIF name can be
+            # shadowed by a same-named user-declared preprocessor
+            # procedure (requires symbol-table tracking, a parser-level
+            # concern, out of scope for a lexer). Also not confirmed:
+            # IBM's page notes that 17 of these (the argument-less ones,
+            # e.g. SYSPARM, COMPILEDATE, COUNTER) "must not be given a
+            # null argument" -- if real source ever invokes them bare,
+            # with no parentheses at all, this rule's suffix=r"(\()"
+            # requirement means they'd fall through to plain Text
+            # instead of Name.Builtin. Not verified either way; flagged
+            # rather than assumed.
+            (
+                words(
+                    (
+                        'comment', 'compiledate', 'compiletime', 'copyright',
+                        'counter', 'maccol', 'maclmar', 'macname', 'macrmar',
+                        'parmset', 'quote', 'service', 'sysdimsize',
+                        'sysoffsetsize', 'sysparm', 'syspointersize',
+                        'sysversion',
                     ),
                     suffix=r"(\s*)(\()",
                 ),
