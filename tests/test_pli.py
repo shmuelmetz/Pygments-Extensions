@@ -7,7 +7,8 @@ sample file), and spot checks on the DCL-attribute/statement-keyword/BIF
 vocabulary sourced from IBM's current Enterprise PL/I for z/OS 6.2 docs
 (see pli.py's module docstring for the specific page each list is drawn
 from -- not exhaustively re-tested here, but a representative sample
-from each of the three sourced lists).
+from each of the three sourced lists), plus the embedded EXEC SQL /
+EXEC CICS "exec" state added after the real-world validation pass.
 
 Run with: pytest tests/test_pli.py
 (requires the dev extra: pip install -e .[dev])
@@ -23,6 +24,7 @@ from pygments.token import (
     Name,
     Number,
     Operator,
+    Punctuation,
     String,
     Text,
     Whitespace,
@@ -517,3 +519,112 @@ def test_bare_oncode_builtin(lexer):
     # to plain Text since the general BIF rule requires a following "(".
     toks = _tokens_no_whitespace(lexer, "PUT EDIT('code=', ONCODE)(A);")
     assert (Name.Builtin, "ONCODE") in toks
+
+
+# --- Embedded EXEC SQL / EXEC CICS regions ---
+# See the module docstring's "Embedded EXEC SQL / EXEC CICS" section for
+# the design and the real-world corpus each of these is drawn from
+# (samples/pli/real-world/from-zowe-pli-language-support/).
+
+
+def test_exec_sql_region_is_bracketed(lexer):
+    # "EXEC SQL" introduces a dedicated "exec" state; both words are
+    # Keyword.Reserved and the region ends at ";". Drawn from
+    # code_samples/plugin-example/sql.pli:
+    # "EXEC SQL SELECT * FROM employees WHERE department_id = :DEPT;".
+    toks = _tokens_no_whitespace(
+        lexer, "EXEC SQL SELECT * FROM employees WHERE x = :DEPT;"
+    )
+    assert (Keyword.Reserved, "EXEC") in toks
+    assert (Keyword.Reserved, "SQL") in toks
+    assert not [t for t, v in toks if t is Error]
+
+
+def test_exec_cics_region_is_bracketed(lexer):
+    # "EXEC CICS" likewise. Drawn from
+    # code_samples/plugin-example/cics.pli.
+    toks = _tokens_no_whitespace(
+        lexer, "EXEC CICS LINK PROGRAM(PROGNAME) COMMAREA(COMA);"
+    )
+    assert (Keyword.Reserved, "EXEC") in toks
+    assert (Keyword.Reserved, "CICS") in toks
+    assert not [t for t, v in toks if t is Error]
+
+
+def test_exec_sql_host_variable_is_name_variable(lexer):
+    # The one embedded construct modeled specifically: ":name" host
+    # variables tokenize as Punctuation(":") + Name.Variable(name), not
+    # the Operator(":") + Text(name) they produced before this pass.
+    toks = _tokens_no_whitespace(lexer, "EXEC SQL FETCH C INTO :DB2VRM;")
+    assert (Name.Variable, "DB2VRM") in toks
+    assert (Punctuation, ":") in toks
+    assert (Text, "DB2VRM") not in toks
+
+
+def test_exec_sql_keywords_are_not_pli_keywords(lexer):
+    # Deliberate change: SELECT/FROM inside EXEC SQL used to highlight as
+    # PL/I Keyword.Reserved purely by coincidence (they reuse PL/I's own
+    # SELECT-statement / FROM-clause words). Inside the "exec" state they
+    # are now generic Name -- the region is bracketed, not parsed.
+    toks = _tokens_no_whitespace(
+        lexer, "EXEC SQL SELECT COL FROM TAB;"
+    )
+    assert (Name, "SELECT") in toks
+    assert (Name, "FROM") in toks
+    assert (Keyword.Reserved, "SELECT") not in toks
+    assert (Keyword.Reserved, "FROM") not in toks
+
+
+def test_exec_region_multiline_terminates_at_semicolon(lexer):
+    # The state persists across newlines until ";" -- real in the corpus
+    # (code_samples/PTASK32.pli's "EXEC CICS IGNORE CONDITION" spans 15
+    # lines). Code after the ";" lexes as ordinary PL/I again.
+    src = (
+        "EXEC CICS IGNORE CONDITION\n"
+        "          ENQBUSY\n"
+        "          NOTFND ;\n"
+        "CALL FOO;\n"
+    )
+    toks = _tokens_no_whitespace(lexer, src)
+    assert (Keyword.Reserved, "CALL") in toks  # back in PL/I
+    assert (Name, "ENQBUSY") in toks  # was inside the region
+    assert not [t for t, v in toks if t is Error]
+
+
+def test_exec_sql_semicolon_inside_string_does_not_terminate(lexer):
+    # A ";" inside a quoted literal must not end the region early --
+    # string literals are recognized inside the "exec" state. Modeled on
+    # code_samples/INSERT.pli's "VALUES ('Igor','Egorov',NULL,'1');".
+    toks = _tokens_no_whitespace(
+        lexer, "EXEC SQL INSERT INTO T VALUES ('a;b'); CALL DONE;"
+    )
+    assert (String, "a;b") in toks
+    assert (Keyword.Reserved, "CALL") in toks
+    assert not [t for t, v in toks if t is Error]
+
+
+def test_exec_end_exec_terminator(lexer):
+    # "END-EXEC" is accepted as an alternate terminator (ISO embedded
+    # SQL / COBOL host convention) even though no PL/I file in the corpus
+    # uses it -- see the module docstring.
+    toks = _tokens_no_whitespace(lexer, "EXEC SQL COMMIT END-EXEC;")
+    assert (Keyword.Reserved, "END-EXEC") in toks
+    assert not [t for t, v in toks if t is Error]
+
+
+def test_exec_region_returns_to_pli_grammar(lexer):
+    # After the ";" the lexer is back in root: SQRTF is a PL/I BIF again.
+    # Exact line from code_samples/plugin-example/sql.pli:
+    # "DEPT = DEPT + SQRTF(SQLDA.SQLLEN);".
+    src = "EXEC SQL SELECT * FROM t WHERE x = :DEPT;\nDEPT = DEPT + SQRTF(SQLDA.SQLLEN);"
+    toks = _tokens_no_whitespace(lexer, src)
+    assert (Name.Builtin, "SQRTF") in toks
+
+
+def test_exec_is_not_triggered_by_bare_exec_identifier(lexer):
+    # The introducer requires "EXEC" followed by "SQL" or "CICS"; a plain
+    # identifier that merely starts with those letters must not enter the
+    # state.
+    toks = _tokens_no_whitespace(lexer, "EXECUTIVE = 1;")
+    assert (Text, "EXECUTIVE") in toks
+    assert (Keyword.Reserved, "EXEC") not in toks

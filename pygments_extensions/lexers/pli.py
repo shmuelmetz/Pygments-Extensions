@@ -212,30 +212,80 @@ fixed:
   state); real ordinary PL/I code doesn't use "..." at all, so this
   costs nothing there.
 
-Found but explicitly NOT addressed here, out of scope for this pass:
-real-world testing turned up embedded EXEC SQL and EXEC CICS regions in
-9 of the ~80 real-world files (e.g. code_samples/PLI0001.pli,
-code_samples/plugin-example/sql.pli and cics.pli, code_samples/PTASK32.pli)
--- these are a genuinely distinct embedded sub-language (their own
-statement grammar, their own ":hostvariable" reference syntax) that
-this lexer doesn't model at all; SELECT/FROM inside EXEC SQL currently
-highlight only because they coincidentally reuse PL/I's own SELECT
-statement and FROM clause keywords, which is accidental, not
-correctness. Proper support needs a dedicated lexer state bracketing
-EXEC SQL/EXEC CICS ... ; (or ... END-EXEC;) regions, similar in spirit
-to how upstream Pygments' CFamilyLexer brackets C preprocessor
-directives -- real work worth its own pass, not a bolt-on here. (That
-zowe-pli-language-support ships dedicated ANTLR grammars for CICS and
-DB2-SQL exec blocks, rather than folding them into its core PL/I
-grammar, is corroborating evidence this is a substantial, separate
-piece of work.) Also observed but not acted on: a single hobbyist
-sample used the Unicode "not equal to" sign U+2260 (≠) in place of
-the documented ¬=/^=/<> forms -- not confirmed anywhere in IBM's
-documented operator set, so left as a lexer Error rather than added;
-and a single test-fixture file used "//" following a statement in a
-way that looks like it might be intended as a comment, but this could
-not be confirmed against IBM's documentation (every IBM PL/I doc URL
-tried during this pass returned HTTP 403) and was not acted on.
+Embedded EXEC SQL / EXEC CICS, addressed in a follow-up pass after the
+validation above flagged it: real-world testing found these regions in
+10 of the ~80 real-world files (code_samples/plugin-example/sql.pli and
+cics.pli, PLI0000.pli, PLI0001.pli, PLI0002.pli, DB2VRM.pli, INSERT.pli,
+PTASK32.pli, PTASK34.pli, PTASKTS.pli in the zowe-pli-language-support
+corpus -- reproduce with
+`grep -rl "EXEC *SQL\\|EXEC *CICS" samples/pli/real-world/`). An
+"EXEC SQL ..." or "EXEC CICS ..." statement is a genuinely distinct
+embedded sub-language (its own statement grammar, and -- for SQL -- its
+own ":hostvariable" reference syntax). Before this pass the lexer didn't
+model it at all: SELECT/FROM inside EXEC SQL highlit only because they
+coincidentally reuse PL/I's own SELECT-statement and FROM-clause
+keywords -- accidental, not correctness.
+
+Now handled by a dedicated "exec" lexer state (see the tokens dict
+below), entered on a "(EXEC)(\\s+)(SQL|CICS)" match in root and left on
+the terminating ";" -- the same "bracket the region, don't parse it"
+approach upstream Pygments' pygments.lexers.c_cpp.CFamilyLexer takes for
+C preprocessor directives in its own 'macro' state, and that this
+lexer's own preprocessor handling already follows (see above). Design
+decisions, each checked against the real-world corpus rather than
+assumed:
+
+* Terminator is a plain ";". Every one of the ~50 embedded statements
+  in the corpus ends that way; none use "END-EXEC". "END-EXEC"
+  (optionally followed by ";") is still accepted as an alternate
+  terminator -- it is what the ISO embedded-SQL standard and other host
+  languages (notably COBOL, whose statements don't otherwise end in
+  ";") use, and it costs nothing to allow -- but it is not the PL/I
+  norm and was not observed here.
+* Multi-line regions work: the state persists across newlines until the
+  ";" (real in the corpus -- code_samples/PTASK32.pli's "EXEC CICS
+  IGNORE CONDITION" spans 15 lines; INSERT.pli's "EXEC SQL INSERT INTO
+  ..." spans 4; DB2VRM.pli's "EXEC SQL DECLARE C CURSOR FOR" spans 2).
+* Host-variable references (":name") tokenize as Punctuation +
+  Name.Variable -- the one piece of embedded syntax modeled
+  specifically, since it is unambiguous and common (":DEPT",
+  ":STATEMENT", ":SQLDA", ":TIMESTAMP", ":BUF1_CLOB" across
+  sql.pli / PLI0000-2.pli / DB2VRM.pli). A following ".qualifier" or
+  ":indicator" falls through to the generic rules. Before this pass a
+  bare ":host" produced Operator(":") + Text(name) -- itself only
+  recently better than an Error token, after ":" became a generic
+  operator character (see the "Real-world validation pass" section).
+* Character-string literals ("'...'", and the "..." form this lexer
+  also accepts) and "/* ... */" comments are recognized inside the
+  region so that a ";" or "*/" occurring inside one cannot end it early
+  (real: EXEC CICS FILE('VSR404'); EXEC SQL ... VALUES ('Igor', ...)).
+* Everything else stays deliberately coarse: SQL keywords, CICS command
+  verbs and option keywords, and table/column/file-name identifiers all
+  tokenize as a single generic Name, not sub-classified into
+  keyword-vs-name. Curating an SQL + CICS keyword vocabulary is
+  parser-territory, out of scope for "reasonable Pygments-style
+  highlighting", and matches both the CFamilyLexer precedent and this
+  lexer's existing preprocessor treatment. (zowe-pli-language-support
+  ships full dedicated ANTLR grammars for its CICS and DB2-SQL exec
+  blocks -- packages/preprocessor-cics/src/antlr/ and
+  packages/preprocessor-db2/src/antlr/ -- corroborating that anything
+  past bracketing is a substantial separate effort. This does mean the
+  prior accidental SELECT/FROM highlighting inside EXEC SQL goes away;
+  that is intended.)
+* The "exec" state ends with a catch-all so it can never emit an Error
+  token (e.g. on dynamic SQL's "?" parameter marker), consistent with
+  how the rest of the lexer degrades unrecognized input to Text.
+
+EXEC DLI (IMS) is the third member of this family but was not found in
+the real-world corpus, so -- per this project's "sourced, not guessed"
+rule -- it is not added; the "exec" introducer regex is trivially
+extensible to it if a real sample turns up.
+
+Still not addressed, unchanged from the validation pass: one hobbyist
+sample's use of U+2260 (≠) for not-equal (undocumented, left as a lexer
+Error rather than added), and one test-fixture file's "//" following a
+statement in a way that looks like an intended comment (unconfirmable
+against IBM docs -- every IBM PL/I doc URL returned HTTP 403 that pass).
 """
 
 import re
@@ -319,6 +369,18 @@ class PLILexer(RegexLexer):
             # before this fix: a lone "%" not followed by a letter
             # matched no rule at all and fell through to an Error token.
             (r"%", Comment.Preproc),
+            # Embedded EXEC SQL / EXEC CICS statements -- see the module
+            # docstring's "Embedded EXEC SQL / EXEC CICS" section for the
+            # full design rationale and how each decision was checked
+            # against the real-world corpus. Enter a dedicated "exec"
+            # state that brackets the region and leaves it on the
+            # terminating ";" (or "END-EXEC"), rather than lexing the
+            # embedded sub-language with PL/I's own rules.
+            (
+                r"(exec)(\s+)(sql|cics)\b",
+                bygroups(Keyword.Reserved, Whitespace, Keyword.Reserved),
+                "exec",
+            ),
             # Bit-string and hex-string constants: '1010'B, '1F'X. These
             # must come before the generic character-string rule, since
             # both start with the same quote character -- only the
@@ -835,6 +897,55 @@ class PLILexer(RegexLexer):
                 ),
                 bygroups(Name.Builtin, Whitespace, Operator),
             ),
+        ],
+        "exec": [
+            # Dedicated state for an embedded EXEC SQL / EXEC CICS
+            # statement -- see the module docstring's "Embedded EXEC SQL
+            # / EXEC CICS" section for the design and its sourcing
+            # against the real-world corpus.
+            #
+            # Terminated by a plain ";" (every one of the ~50 embedded
+            # statements in the real-world corpus ends this way). Listed
+            # first so it wins over the generic-punctuation rule below.
+            (r";", Punctuation, "#pop"),
+            # "END-EXEC" (optionally followed by ";") is the terminator
+            # the ISO embedded-SQL standard and COBOL use; accepted as an
+            # alternate even though no PL/I file in the corpus uses it. A
+            # trailing ";" then falls through to root as an ordinary
+            # statement terminator.
+            (r"end-exec\b", Keyword.Reserved, "#pop"),
+            (r"\s+", Whitespace),
+            # A "/* ... */" comment can appear mid-statement; the shared
+            # "comment" state pops straight back here, so a ";" inside
+            # the comment can't end the region early.
+            (r"/\*", Comment.Multiline, "comment"),
+            # Host-variable reference (SQL): ":name". Any following
+            # ".qualifier" or ":indicator" falls through to the generic
+            # rules below. Real in the corpus: ":DEPT", ":STATEMENT",
+            # ":SQLDA", ":TIMESTAMP", ":BUF1_CLOB".
+            (
+                r"(:)(\s*)(" + _SYMBOL + r")",
+                bygroups(Punctuation, Whitespace, Name.Variable),
+            ),
+            # String literals -- recognized so an embedded ";" or "*/"
+            # inside one doesn't end the region/comment. Corpus:
+            # EXEC CICS FILE('VSR404'); EXEC SQL ... VALUES ('Igor',...).
+            (r"'", String, "string"),
+            (r'"', String, "string_double"),
+            (r"[0-9]+(?:\.[0-9]+)?(?:[Ee][+-]?[0-9]+)?", Number),
+            # Everything else stays coarse on purpose: SQL keywords, CICS
+            # command verbs and option keywords, and table/column/file
+            # names all become a single generic Name (see the module
+            # docstring for why this matches the CFamilyLexer 'macro'
+            # precedent and this lexer's own preprocessor handling).
+            (_SYMBOL, Name),
+            (r"[(),.]", Punctuation),
+            (r"[-+*/=<>|&:]", Operator),
+            # Catch-all: never emit an Error token from inside an
+            # embedded region (e.g. dynamic SQL's "?" parameter marker),
+            # consistent with how the rest of the lexer degrades
+            # unrecognized input to Text.
+            (r".", Text),
         ],
         "string": [
             (r"[^'\n]+", String),
