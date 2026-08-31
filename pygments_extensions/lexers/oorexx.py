@@ -120,6 +120,20 @@ __all__ = ["OORexxLexer"]
 _SYMBOL_START = r"[a-z_@#$!?]"
 _SYMBOL_CHAR = r"[\w@#$!?]"
 _SYMBOL = _SYMBOL_START + _SYMBOL_CHAR + r"*"
+# A label may itself be a compound symbol (stem.tail, e.g. "TRAP.SIGL:"
+# or "UTF.8:") -- a common convention for grouping related SIGNAL/CALL
+# targets under a shared prefix. _SYMBOL alone stops at the first ".",
+# so without this, "TRAP.SIGL:" tokenized as bare-symbol "TRAP" (Text,
+# via the catch-all rule) followed by ".SIGL" (matching the unrelated
+# dot-prefixed-environment-symbol rule below) followed by a now-orphaned
+# ":" that no rule expects, producing an Error token on the colon.
+# Confirmed via real-world testing (D:\utility\rxwhois.cmd, a genuine
+# classic-Rexx script using exactly this labeling convention).
+# A compound symbol's tail piece may also be a bare number (e.g.
+# "UTF.8:", "stem.1") -- _SYMBOL alone can't match that since
+# _SYMBOL_START excludes digits, confirmed by the same real-world test
+# file above (D:\utility\rxwhois.cmd's "UTF.8:" label).
+_COMPOUND_SYMBOL = _SYMBOL + r"(?:\.(?:" + _SYMBOL + r"|[0-9]+))*"
 
 
 class OORexxLexer(RegexLexer):
@@ -252,7 +266,7 @@ class OORexxLexer(RegexLexer):
             # of a chance to match. Confirmed by test failure before
             # this fix.
             (
-                r"(" + _SYMBOL + r")([ \t]*)(:)([ \t]*)(procedure)\b",
+                r"(" + _COMPOUND_SYMBOL + r")([ \t]*)(:)([ \t]*)(procedure)\b",
                 bygroups(
                     Name.Function,
                     Whitespace,
@@ -262,7 +276,7 @@ class OORexxLexer(RegexLexer):
                 ),
             ),
             (
-                r"(" + _SYMBOL + r")([ \t]*)(:)",
+                r"(" + _COMPOUND_SYMBOL + r")([ \t]*)(:)",
                 bygroups(Name.Label, Whitespace, Operator),
             ),
             include("function"),
@@ -334,9 +348,18 @@ class OORexxLexer(RegexLexer):
             # explicit form, while extremely common in real object
             # method bodies, happened not to appear in the original
             # hand-written samples/tests this lexer shipped with.
+            # "¬" (U+00AC, NOT SIGN) is a documented alternate spelling
+            # for "\" as the NOT operator (¬=, ¬>, ¬<, or standalone ¬x)
+            # -- inherited from mainframe/DOS-era code pages where some
+            # keyboards render backslash as this glyph instead. Real-
+            # world testing (D:\utility\*.cmd, a genuine ArcaOS-era
+            # script corpus) found it used throughout and entirely
+            # unhandled: every occurrence produced an Error token.
             (
-                r"(-|//|/|\(|\)|\*\*|\*|\\<<|\\<|\\==|\\=|\\>>|\\>|\\|\|\||"
-                r"\||&&|&|%|\+|<<=|<<|<=|<>|<|==|=|><|>=|>>=|>>|>|\.|,|;)",
+                r"(-|//|/|\(|\)|\*\*|\*|"
+                r"\\<<|\\<|\\==|\\=|\\>>|\\>|\\|"
+                r"\u00ac<<|\u00ac<|\u00ac==|\u00ac=|\u00ac>>|\u00ac>|\u00ac|"
+                r"\|\||\||&&|&|%|\+|<<=|<<|<=|<>|<|==|=|><|>=|>>=|>>|>|\.|,|;)",
                 Operator,
             ),
         ],
