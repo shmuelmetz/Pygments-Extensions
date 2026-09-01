@@ -67,7 +67,7 @@ The lexers target upstream Pygments and, through the Wikimedia deployment pipeli
 
 ## Collaboration
 
-Contributions and corrections are welcome. If you maintain lexers for languages not yet covered here, please open an issue or pull request, or incorporate whatever is useful into your own work.
+Contributions and corrections are welcome. If you maintain lexers for languages not yet covered here, please open an issue or pull request, or incorporate whatever is useful into your own work. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, lexer/file naming conventions, and test requirements.
 
 ## Author
 
