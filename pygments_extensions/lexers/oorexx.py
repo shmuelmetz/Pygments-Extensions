@@ -83,6 +83,26 @@ MIXINCLASS, SUBCLASS, INHERIT, the bare CLASS/GET/SET modifiers -- all
 per ooRexx Reference 5.0.0 Sec 3.2/3.3/3.5) were falling through as
 plain Text despite being extremely common on real ``::CLASS``/
 ``::METHOD`` lines; they're now recognized as Keyword.Declaration.
+
+Cross-check against an independent lexer (2026-09): Till Winkler
+(RexxLA members list) shared a second ooRexx Pygments lexer he wrote
+independently from the ooRexx documentation, and a feature-by-feature
+comparison against a 95-case corpus found six real gaps here --
+``USE LOCAL`` and ``SELECT CASE`` (5.0), ``ADDRESS ... WITH`` I/O
+redirection sub-keywords (5.0), the ooRexx-specific condition names
+(``LOSTDIGITS``/``NOMETHOD``/``NOSTRING``/``USER``), the ``::ANNOTATE``
+directive (5.0, previously producing raw Error tokens since no rule
+matched a bare unrecognized ``::``), and ``::RESOURCE``/``::OPTIONS``
+body handling (previously absent for ``::RESOURCE``, entirely
+unhandled beyond the bare directive keyword for ``::OPTIONS``) -- now
+ported in below, implemented independently against the ooRexx
+reference rather than copied from his file. The same comparison found
+his lexer's own ``::OPTIONS`` body has no identifier-or-number rule
+and splits any value that isn't itself a sub-keyword into one
+character-token per character; this port's version (see
+``options_body`` below) fixes that rather than reproducing it. See
+``tests/test_oorexx.py``'s cross-check regression tests for coverage
+of all of the above.
 """
 
 import re
@@ -97,6 +117,30 @@ from pygments.token import (
     String,
     Text,
     Whitespace,
+)
+
+# Condition names recognized by SIGNAL/CALL ON|OFF (and, since ooRexx 5.0,
+# ::OPTIONS' CONDITION subkeyword). ERROR/FAILURE/HALT/NOVALUE/SYNTAX/
+# NOTREADY are inherited from classic Rexx; LOSTDIGITS, NOMETHOD, NOSTRING,
+# and USER (user-defined conditions raised via RAISE) are ooRexx additions.
+# Verified against a second, independently-written ooRexx lexer (Till
+# Winkler's, RexxLA members list, 2026-09) as a cross-check before adding.
+_CONDITIONS = (
+    "error", "failure", "halt", "lostdigits", "nomethod", "nostring",
+    "notready", "novalue", "syntax", "user",
+)
+
+# ::OPTIONS body sub-keywords (ooRexx 5.0's ::OPTIONS directive sets
+# package-wide parser/runtime options). Cross-checked against Till
+# Winkler's independently-written lexer, which already enumerated these
+# from the ooRexx docs; his version had a real bug here (see
+# "options_body" state below) that this port fixes rather than repeats.
+_OPTIONS_SUBKW = (
+    "condition", "digits", "error", "failure", "form", "fuzz",
+    "lostdigits", "namespace", "nocrossref", "noformat", "noprolog",
+    "noreplace", "nostrictargs", "nostrictassign", "nostrictcase",
+    "nostrictsignal", "nostring", "notrace", "notready", "novalue",
+    "noverbose", "normal", "prolog", "syntax", "trace", "verbose",
 )
 
 __all__ = ["OORexxLexer"]
@@ -190,8 +234,39 @@ class OORexxLexer(RegexLexer):
             (
                 r"(::)(\s*)"
                 r"(class|method|routine|requires|attribute|constant|"
-                r"options|resource|package)\b",
+                # ::ANNOTATE (5.0) was missing entirely -- found via
+                # cross-check against Till Winkler's independently-
+                # written ooRexx lexer (RexxLA members list, 2026-09):
+                # "::" isn't matched by the operator rule (no bare ":"
+                # token exists there), so an unrecognized "::" produced
+                # an Error token, confirmed against this file before
+                # this fix.
+                r"annotate|package)\b",
                 bygroups(Keyword.Namespace, Whitespace, Keyword.Declaration),
+            ),
+            # ::RESOURCE name -- transitions to a raw-text body state
+            # (see "resource_body" below), terminated by a line
+            # containing only "::". Must come before the generic
+            # directive rule above's match window closes, but since
+            # that rule doesn't push a state, list this dedicated
+            # ::RESOURCE form first so it wins and enters resource_body.
+            (
+                r"(::)(\s*)(resource)\b([ \t]*)(" + _SYMBOL + r")?",
+                bygroups(
+                    Keyword.Namespace,
+                    Whitespace,
+                    Keyword.Declaration,
+                    Whitespace,
+                    Name.Label,
+                ),
+                "resource_body",
+            ),
+            # ::OPTIONS -- transitions to its sub-keyword body state
+            # (see "options_body" below), which lasts until end of line.
+            (
+                r"(::)(\s*)(options)\b",
+                bygroups(Keyword.Namespace, Whitespace, Keyword.Declaration),
+                "options_body",
             ),
             # Dot-prefixed environment-directory symbol lookups: .array,
             # .string, .true, .false, .nil, .MyClass, etc. The dot means
@@ -313,9 +388,20 @@ class OORexxLexer(RegexLexer):
                 r"forever|forward|guard|if|interpret|iterate|leave|nop|"
                 r"numeric|off|on|options|otherwise|parse|pull|push|queue|"
                 r"return|say|select|self|signal|strict|super|then|to|"
-                r"trace|until|use|when|while)\b",
+                r"trace|until|use|when|while|"
+                # USE LOCAL (5.0) and SELECT CASE (5.0) sub-keywords --
+                # gap found via cross-check against Till Winkler's
+                # independently-written ooRexx lexer, RexxLA members
+                # list 2026-09; both fell through to plain Text before.
+                r"local|case|"
+                # ADDRESS ... WITH <io-type> STEM|STREAM redirection
+                # (5.0) sub-keywords. Same cross-check.
+                r"with|input|output|stem|stream|append|replace|normal)\b",
                 Keyword.Reserved,
             ),
+            # Condition names, valid after SIGNAL/CALL ON|OFF and
+            # ::OPTIONS' CONDITION sub-keyword. See _CONDITIONS above.
+            (words(_CONDITIONS, prefix=r"\b", suffix=r"\b"), Keyword.Type),
             # ::CLASS / ::METHOD / ::ATTRIBUTE directive modifier
             # keywords -- e.g. "::method foo class public",
             # "::class Vector subclass complex public",
@@ -379,6 +465,44 @@ class OORexxLexer(RegexLexer):
             (r"[^*]+", Comment.Multiline),
             (r"\*/", Comment.Multiline, "#pop"),
             (r"\*", Comment.Multiline),
+        ],
+        # ::OPTIONS body -- a line of package-wide parser/runtime
+        # sub-keywords (see _OPTIONS_SUBKW above), e.g.
+        # "::options digits 15 namespace myns". Gap and a concrete bug
+        # found via cross-check against Till Winkler's independently-
+        # written ooRexx lexer (RexxLA members list, 2026-09): his
+        # version's equivalent state has no identifier-or-number rule,
+        # so any value that isn't itself a recognized sub-keyword (the
+        # "15" and "myns" above) falls to a single-character catch-all
+        # and gets split into one Text token per character. Fixed here
+        # by including "function" (numbers) and a plain identifier
+        # fallback rule, not just the sub-keyword list.
+        "options_body": [
+            (r"\n", Whitespace, "#pop"),
+            (r"[ \t]+", Whitespace),
+            (r"--.*", Comment.Single),
+            (r"/\*", Comment.Multiline, "comment"),
+            include("strings"),
+            (words(_OPTIONS_SUBKW, prefix=r"\b", suffix=r"\b"), Keyword.Type),
+            (r"[0-9]+(\.[0-9]+)?(e[+-]?[0-9])?", Number),
+            (_SYMBOL, Text),
+        ],
+        # ::RESOURCE body -- raw text (not Rexx code) until a line
+        # containing only "::". Previously unhandled entirely: the
+        # ::RESOURCE keyword itself was recognized as a directive, but
+        # its body was left to fall through to ordinary code rules,
+        # which mis-tokenizes arbitrary resource content as if it were
+        # Rexx. Gap found via cross-check against Till Winkler's
+        # independently-written ooRexx lexer (RexxLA members list,
+        # 2026-09), which already handles this correctly.
+        "resource_body": [
+            (r"^[ \t]*::[ \t]*$", Keyword.Namespace, "#pop"),
+            (r"[^\n]+", String.Other),
+            (r"\n", String.Other),
+        ],
+        "strings": [
+            (r'"', String, "string_double"),
+            (r"'", String, "string_single"),
         ],
     }
 

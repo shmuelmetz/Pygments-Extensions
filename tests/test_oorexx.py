@@ -255,3 +255,101 @@ def test_semicolon_statement_separator(lexer):
     from pygments.token import Error
 
     assert not [t for t, v in toks if t is Error]
+
+
+# --- Regression tests for gaps found via cross-check against Till
+# Winkler's independently-written ooRexx lexer (RexxLA members list
+# thread, 2026-09). His lexer was written from the ooRexx docs rather
+# than as a classic-RexxLexer fork, and covered several 5.0/5.2
+# keyword forms this one didn't yet; these tests cover the ported
+# subset (USE LOCAL, SELECT CASE, ADDRESS ... WITH redirection,
+# condition names, ::ANNOTATE, ::OPTIONS, ::RESOURCE) plus a
+# regression test for a real bug his ::OPTIONS body state had, which
+# this port fixes rather than repeats.
+
+
+def test_use_local_and_select_case_keywords(lexer):
+    # ooRexx 5.0: USE LOCAL exposes only routine-local variables;
+    # SELECT CASE is a switch-style variant of SELECT.
+    toks = _tokens_no_whitespace(lexer, "use local x, y\n")
+    kw_vals = [v.lower() for t, v in toks if t is Keyword.Reserved]
+    assert "use" in kw_vals
+    assert "local" in kw_vals
+
+    toks = _tokens_no_whitespace(lexer, "select case x\nend\n")
+    kw_vals = [v.lower() for t, v in toks if t is Keyword.Reserved]
+    assert "select" in kw_vals
+    assert "case" in kw_vals
+
+
+def test_address_with_output_stem_keywords(lexer):
+    # ooRexx 5.0: ADDRESS ... WITH lets a host-command invocation
+    # redirect stdout/stderr into stems or streams.
+    fragment = "address system 'dir' with output stem out. error stem err.\n"
+    toks = _tokens_no_whitespace(lexer, fragment)
+    kw_vals = [v.lower() for t, v in toks if t is Keyword.Reserved]
+    for word in ("with", "output", "stem"):
+        assert word in kw_vals, f"{word!r} not tokenized as a keyword"
+    # "error" here is the redirection target, not the condition name --
+    # it's covered by the _CONDITIONS/Keyword.Type rule instead (see
+    # test_condition_names), so check that path rather than Reserved.
+    type_vals = [v.lower() for t, v in toks if t is Keyword.Type]
+    assert "error" in type_vals
+
+
+def test_condition_names(lexer):
+    # LOSTDIGITS/NOMETHOD/NOSTRING/USER are ooRexx additions to the
+    # classic-Rexx condition set; all are valid after SIGNAL/CALL ON|OFF.
+    toks = _tokens_no_whitespace(lexer, "signal on lostdigits\ncall on nomethod\n")
+    type_vals = [v.lower() for t, v in toks if t is Keyword.Type]
+    assert "lostdigits" in type_vals
+    assert "nomethod" in type_vals
+
+
+def test_annotate_directive(lexer):
+    # ::ANNOTATE (5.0) was entirely unrecognized before this fix -- "::"
+    # matched no rule at all (there's no bare ":" operator token), so it
+    # produced Error tokens instead of being seen as a directive.
+    from pygments.token import Error
+
+    toks = _tokens_no_whitespace(lexer, '::annotate class Foo author "Jane"\n')
+    assert (Keyword.Namespace, "::") in toks
+    assert (Keyword.Declaration, "annotate") in [
+        (t, v.lower()) for t, v in toks if t is Keyword.Declaration
+    ]
+    assert not [t for t, v in toks if t is Error]
+
+
+def test_options_body_numbers_and_identifiers_not_char_split(lexer):
+    # Regression test for a real bug in the lexer this feature was
+    # ported from (Till Winkler's): its ::OPTIONS body state had no
+    # identifier-or-number rule, so any value that wasn't itself a
+    # recognized sub-keyword -- a digit count, a namespace name --
+    # fell to a single-character catch-all and was split into one
+    # token per character (e.g. "15" -> Text('1'), Text('5')). This
+    # lexer's version must not repeat that: "15" and "myns" must each
+    # come through as one token.
+    toks = _tokens_no_whitespace(lexer, "::options digits 15 namespace myns\n")
+    vals = [v for t, v in toks]
+    assert "15" in vals
+    assert "myns" in vals
+    assert "1" not in vals
+    assert "5" not in vals
+
+
+def test_resource_body_is_raw_text(lexer):
+    # ::RESOURCE's body is raw data, not Rexx code, terminated by a
+    # line containing only "::" -- previously unhandled entirely, so
+    # the body was mis-lexed as if it were ordinary source.
+    from pygments.token import Error
+
+    fragment = "::resource greeting\nHello, ~world~ this is not code\n::\nsay 1\n"
+    toks = list(lexer.get_tokens(fragment))
+    assert any(t is String.Other for t, v in toks)
+    # The "~" inside the resource body must NOT be tokenized as a
+    # message-send operator -- confirms the body is treated as raw text.
+    body_region_ops = [
+        v for t, v in toks if t is Operator and v == "~"
+    ]
+    assert not body_region_ops
+    assert not [t for t, v in toks if t is Error]
