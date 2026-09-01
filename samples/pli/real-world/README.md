@@ -49,6 +49,22 @@ assertion in `tests/test_pli.py` (see that file's
 `test_sample_file_lexes_without_error` for the specific carve-out and
 reasoning).
 
+### `from-prino-neocities/` (1 file, ~21,700 lines)
+
+`lift.pli`, Robert AH Prins' hitchhiking-statistics extraction program,
+sent in as real-world test data in response to this project's own
+IBM-MAIN outreach post. Served as syntax-highlighted HTML by the
+source site (via the author's own REXX-based PL/I-to-HTML converter)
+rather than plain text; the HTML wrapper and highlighting spans were
+stripped mechanically, verified to leave no residual markup or
+entities, before saving here. GPLv3-or-later, per the license notice
+embedded in the file's own header (confirmed, not assumed, against
+the actual license text). A genuinely large, heavily
+preprocessor-macro-using legacy program (`%dcl`, a `%filler`
+procedure, a `%$$`-named preprocessor procedure) with no embedded
+EXEC SQL/CICS -- lexes cleanly, zero Error tokens across ~200,000
+tokens.
+
 ## What was used for testing but is NOT committed here
 
 * **[benni-wdev/pliExamples](https://github.com/benni-wdev/pliExamples)**
@@ -71,6 +87,9 @@ reasoning).
 ```
 # from-zowe-pli-language-support/: raw.githubusercontent.com/zowe/zowe-pli-language-support/development/<path>
 # from-nkimotou-pli/: raw.githubusercontent.com/nkimotou/PLI/main/<path>
+# from-prino-neocities/: prino.neocities.org/resources/<path> (served as
+#   syntax-highlighted HTML -- strip the <body>...</body> tags and any
+#   remaining markup/entities to recover plain source)
 ```
 
 The original relative path within its source repository is recorded
