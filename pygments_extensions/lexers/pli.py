@@ -387,8 +387,17 @@ class PLILexer(RegexLexer):
             # trailing radix letter distinguishes them, so order matters
             # (RegexLexer takes the first matching rule, not the most
             # specific).
-            (r"'[01]+'[Bb]", Number.Bin),
-            (r"'[0-9A-Fa-f]+'[Xx]", Number.Hex),
+            # Explicit-case classes ([Bb]/[Xx]/hex-digit case pairs) would
+            # be redundant here -- this lexer already runs under
+            # re.IGNORECASE (see `flags` above), so a plain uppercase
+            # spelling already matches either case. Confirmed via
+            # regexlint's W122 ("overlap due to case insensitive mode"),
+            # run against a real pygments/pygments checkout ahead of
+            # upstream submission -- this was the only warning it raised
+            # anywhere in pygments.lexers once these two lexers were
+            # spliced in.
+            (r"'[01]+'B", Number.Bin),
+            (r"'[0-9A-F]+'X", Number.Hex),
             (r"'", String, "string"),
             # Double-quoted strings: not used for ordinary PL/I
             # character constants (always single-quoted -- see the
