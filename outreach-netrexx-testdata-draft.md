@@ -1,5 +1,6 @@
-**Venue:** groups.io/g/netrexx (NetRexx Forum), cross-posted to
-main@rexxla-members.groups.io and IBM-MAIN. IBM-MAIN is not a
+**Venue:** groups.io/g/netrexx (NetRexx Forum), posting address
+netrexx@groups.io, cross-posted to main@rexxla-members.groups.io and
+IBM-MAIN. IBM-MAIN is not a
 mismatch here despite NetRexx being JVM-based -- zAAP (introduced
 2004, explicitly for Java/XML workloads under z/OS, folded into zIIP
 from z13 in 2015 onward) has given mainframe shops a real, cost-driven
