@@ -55,6 +55,7 @@ Issues = "https://github.com/shmuelmetz/pygments-extensions/issues"
 [project.entry-points."pygments.lexers"]
 oorexx = "pygments_extensions.lexers.oorexx:OORexxLexer"
 pli = "pygments_extensions.lexers.pli:PLILexer"
+netrexx = "pygments_extensions.lexers.netrexx:NetRexxLexer"
 
 # Not implemented yet -- see README.md for current-vs-future scope.
 # Uncomment each line as its module is actually written.
