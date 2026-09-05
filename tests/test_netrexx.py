@@ -214,6 +214,75 @@ def test_dot_method_call_not_tilde():
     assert not any(v in ("~", "~~") for t, v in toks if t is Operator)
 
 
+def test_loop_control_keywords():
+    # NRL Sec 25 "Loop instruction": to, by, for, while, until, forever,
+    # over, label, protect are all real keywords.
+    lexer = NetRexxLexer()
+    text = "loop label pooks i=1 to 10 by 2 for 5 while j<3 until k>9\n"
+    toks = _tokens_no_whitespace(lexer, text)
+    for kw in ("loop", "label", "to", "by", "for", "while", "until"):
+        assert (Keyword.Reserved, kw) in toks, f"missing keyword {kw!r}"
+
+
+def test_do_catch_finally_keywords():
+    # NRL Sec 19 "Do instruction".
+    lexer = NetRexxLexer()
+    text = "do\n  catch e = Exception\nfinally\nend\n"
+    toks = _tokens_no_whitespace(lexer, text)
+    assert (Keyword.Reserved, "catch") in toks
+    assert (Keyword.Reserved, "finally") in toks
+
+
+def test_numeric_instruction_keywords():
+    # NRL Sec 28 "Numeric instruction".
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, "numeric digits 20\n")
+    assert (Keyword.Reserved, "numeric") in toks
+    assert (Keyword.Reserved, "digits") in toks
+
+
+def test_nop_import_package_keywords():
+    lexer = NetRexxLexer()
+    for text, kw in (
+        ("nop\n", "nop"),
+        ("import java.lang.String\n", "import"),
+        ("package testpackage\n", "package"),
+    ):
+        toks = _tokens_no_whitespace(lexer, text)
+        assert (Keyword.Reserved, kw) in toks
+
+
+def test_class_visibility_and_modifier_keywords():
+    # NRL Sec 18.1/18.2 -- shared/adapter/interface are real; confirms
+    # the corrected _DECLARATION_KEYWORDS set.
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(
+        lexer, "class Foo shared adapter\n"
+    )
+    assert (Keyword.Declaration, "shared") in toks
+    assert (Keyword.Declaration, "adapter") in toks
+
+
+def test_protected_is_not_a_keyword():
+    # CORRECTION: "protected" is Java/ooRexx, not NetRexx -- confirmed
+    # absent from NRL Sec 18.1/26.2/32.1's real visibility-word lists
+    # (private/public/shared/inheritable).
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, "method foo protected\n")
+    assert (Keyword.Declaration, "protected") not in toks
+    assert (Keyword.Reserved, "protected") not in toks
+
+
+def test_call_and_arg_are_not_keywords():
+    # CORRECTION: NetRexx has no classic-Rexx CALL instruction (NRL
+    # Sec 9.1: a method invocation is itself the instruction). "arg" is
+    # explicitly stated NOT to be a keyword (NRL Sec 31 footnote).
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, "call = 1\narg = 2\n")
+    assert (Keyword.Reserved, "call") not in toks
+    assert (Keyword.Reserved, "arg") not in toks
+
+
 def test_no_crash_on_full_class_snippet():
     # A fuller snippet combining several of the above constructs, per
     # the Tutorial's own vector3d example -- just checking this doesn't

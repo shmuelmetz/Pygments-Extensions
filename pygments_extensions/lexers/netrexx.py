@@ -97,17 +97,27 @@ Also verified from the same NRL sections, now reflected below:
   environment-directory-lookup concept or cascading-send syntax for a
   dot rule to disambiguate against.
 
-Explicitly NOT yet covered, pending a fuller reference pass: the
-complete reserved-word set (only the words actually shown in the
-Tutorial pages and the NRL sections read so far -- Types/Classes,
-Terms, Methods and Constructors, Type conversions, Sec 6.2-6.6 -- are
-included below; NRL sections on Exceptions (p149), the `numeric`
-instruction (p89), `select`/`signal` (p104/108), and the built-in
-`Rexx`-class method names (p159) have not yet been read); condition
-names and full exception-handling keyword coverage; and any real-world
-corpus validation of the kind OORexxLexer and PLILexer both received
-before being considered real-world-ready -- see this project's own
-README for that standard before treating this lexer as done.
+Explicitly NOT yet covered, pending a fuller reference pass: NRL
+sections not yet read -- Return (p102), Say (p103), Select (p104),
+Signal (p108), Trace (p109), Program structure (p114), Special names
+and methods (p121, e.g. `ask`/`source`/`version`/`digits`/`form` as
+retrievable special words), Exceptions (p149, condition/exception-type
+names), and the built-in `Rexx`-class method names (p159) -- so
+keywords belonging only to those sections (`select`, `when`,
+`otherwise`, `return`, `say`, `signal`, `interpret`, `trace`, `new`,
+`this`, `super`) are included below on the strength of their instruction
+existing (confirmed via the NRL's table of contents and
+cross-references) but not yet against their own full grammar sections;
+and any real-world corpus validation of the kind OORexxLexer and
+PLILexer both received before being considered real-world-ready -- see
+this project's own README for that standard before treating this
+lexer as done.
+
+Sections actually read and reflected below: 6.2-6.6 (Structure/Tokens),
+7-10 (Types/Terms/Methods/Conversions), 18 (Class), 19 (Do), 20 (Exit),
+21 (If), 22 (Import), 23 (Iterate), 24 (Leave), 25 (Loop), 26 (Method),
+27 (Nop), 28 (Numeric), 29 (Options), 30 (Package), 31 (Parse, partial
+-- the special-word notes only), 32 (Properties).
 """
 
 import re
@@ -145,21 +155,51 @@ _SYMBOL_START = r"[a-z_$€]"
 _SYMBOL_CHAR = r"[a-z0-9_$€]"
 _SYMBOL = _SYMBOL_START + _SYMBOL_CHAR + r"*"
 
-# Keywords confirmed so far from the NetRexx Tutorial's "Language Basics"
-# and "Classes and Objects" pages only (nr_6.html, nr_11.html). This is
-# deliberately a small, cited starting set, not a transcription of the
-# full Language Reference's reserved-word list -- expand only against
-# that Reference or real .nrx source, per this file's own docstring.
+# Visibility/modifier-family keywords confirmed against the real NRL
+# (Sections 18 Class, 19 Do, 25 Loop, 26 Method, 32 Properties) --
+# "class"/"extends"/"implements"/"method"/"returns"/"properties"
+# themselves get their own dedicated regex rules above/below instead of
+# living in this generic list, since they need bygroups() treatment
+# (name/type capture) that a plain words() alternation can't give them.
+# CORRECTION from the first pass: "protected" was removed -- it is NOT
+# a NetRexx keyword at all (that's Java/ooRexx; NetRexx's real
+# visibility words are private/public/shared/inheritable, confirmed
+# NRL Sec 18.1/26.2/32.1).
 _DECLARATION_KEYWORDS = (
-    "class", "extends", "implements", "properties", "method", "returns",
-    "public", "private", "static", "protected",
+    "private", "public", "shared", "inheritable",  # visibility
+    "abstract", "adapter", "final", "interface",  # class modifier
+    "constant", "native", "static", "transient", "volatile",  # method/
+    # properties modifier (some already covered above; static/abstract/
+    # final/constant recur across class/method/properties per the NRL)
+    "binary", "deprecated", "unused", "protect", "uses", "signals",
 )
 
+# Instruction/control-flow keywords. "select" "when" "otherwise"
+# "return" "say" "signal" "interpret" "trace" "new" "this" "super" are
+# confirmed to exist as real NetRexx instructions/special words (seen
+# in the NRL's table of contents and cross-references) but their full
+# grammar sections (pp97-112, 121-153) haven't been read yet -- see
+# this module's docstring "Explicitly NOT yet covered". Everything
+# else below (if/then/else/do/end/loop/leave/iterate/label/protect/
+# catch/finally/to/by/for/while/until/forever/over/exit/nop/import/
+# package/numeric/digits/form/scientific/engineering/options) is
+# confirmed against the actual instruction-grammar sections read.
+#
+# CORRECTIONS from the first pass: "call" and "arg" removed -- neither
+# is a real NetRexx keyword. NetRexx has no classic-Rexx CALL
+# instruction at all (NRL Sec 9.1 "Method call instructions": a method
+# invocation is itself the instruction, `symbol(...)`, no separate
+# keyword). "arg" is explicitly NOT a keyword per the NRL's own words
+# (Sec 31 Parse instruction, footnote): "`parse arg template`... will
+# work... even though **arg is not a keyword** in this case" -- it's
+# just the conventional name of the variable holding command args.
 _KEYWORDS = (
     "if", "then", "else", "do", "end", "loop", "leave", "iterate",
+    "label", "catch", "finally", "to", "by", "for", "while", "until",
+    "forever", "over", "exit", "nop", "import", "package", "options",
+    "numeric", "digits", "form", "scientific", "engineering",
     "select", "when", "otherwise", "return", "say", "parse", "signal",
-    "call", "arg", "options", "numeric", "trace", "interpret", "exit",
-    "this", "super", "new",
+    "trace", "interpret", "this", "super", "new",
 )
 
 
