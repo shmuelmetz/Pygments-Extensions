@@ -283,6 +283,51 @@ def test_call_and_arg_are_not_keywords():
     assert (Keyword.Reserved, "arg") not in toks
 
 
+def test_select_case_keyword():
+    # NRL Sec 35.3 "Case phrase".
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, "select case i+1\nend\n")
+    assert (Keyword.Reserved, "case") in toks
+
+
+def test_trace_sub_keywords():
+    # NRL Sec 37 "Trace instruction".
+    lexer = NetRexxLexer()
+    for word in ("all", "methods", "off", "results", "var"):
+        toks = _tokens_no_whitespace(lexer, f"trace {word}\n")
+        assert (Keyword.Reserved, word) in toks, f"missing {word!r}"
+
+
+def test_dependent_class_modifier():
+    # NRL Sec 39.2 "Dependent classes".
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, "class Foo.Dep dependent\n")
+    assert (Keyword.Declaration, "dependent") in toks
+
+
+def test_special_names_are_pseudo_not_reserved():
+    # NRL Sec 40.1: special names are explicitly NOT reserved --
+    # "they may be used as variable names instead, if desired."
+    # CORRECTION: this/super were wrongly Keyword.Reserved in the
+    # first pass; they belong here with the rest of the special names.
+    lexer = NetRexxLexer()
+    for word in ("ask", "asknoecho", "length", "this", "super",
+                 "version", "parent", "source"):
+        toks = _tokens_no_whitespace(lexer, f"{word}\n")
+        assert (Keyword.Pseudo, word) in toks, f"{word!r} -> {toks}"
+        assert (Keyword.Reserved, word) not in toks
+
+
+def test_new_is_not_a_keyword():
+    # CORRECTION: "new" was never verified and is now positively
+    # contradicted -- every NRL constructor example (Sec 9.5, Sec 39)
+    # uses ClassName(args), never a "new" operator.
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, "x = new\n")
+    assert (Keyword.Reserved, "new") not in toks
+    assert (Keyword.Pseudo, "new") not in toks
+
+
 def test_no_crash_on_full_class_snippet():
     # A fuller snippet combining several of the above constructs, per
     # the Tutorial's own vector3d example -- just checking this doesn't

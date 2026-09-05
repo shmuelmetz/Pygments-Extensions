@@ -98,26 +98,23 @@ Also verified from the same NRL sections, now reflected below:
   dot rule to disambiguate against.
 
 Explicitly NOT yet covered, pending a fuller reference pass: NRL
-sections not yet read -- Return (p102), Say (p103), Select (p104),
-Signal (p108), Trace (p109), Program structure (p114), Special names
-and methods (p121, e.g. `ask`/`source`/`version`/`digits`/`form` as
-retrievable special words), Exceptions (p149, condition/exception-type
-names), and the built-in `Rexx`-class method names (p159) -- so
-keywords belonging only to those sections (`select`, `when`,
-`otherwise`, `return`, `say`, `signal`, `interpret`, `trace`, `new`,
-`this`, `super`) are included below on the strength of their instruction
-existing (confirmed via the NRL's table of contents and
-cross-references) but not yet against their own full grammar sections;
-and any real-world corpus validation of the kind OORexxLexer and
-PLILexer both received before being considered real-world-ready -- see
-this project's own README for that standard before treating this
-lexer as done.
+Sections 40.2 (Special methods), 41 (JavaBean Support), 42 (Parsing
+templates), 43-44 (Numbers and Arithmetic, Binary values), 45
+(Exceptions -- condition/exception-type names beyond the generic
+`catch`/`finally`/`signals` grammar already covered), 46-48 (Thread
+Pool Support, Structured Lists, built-in `Rexx`-class string methods).
+Any real-world corpus validation of the kind OORexxLexer and PLILexer
+both received before being considered real-world-ready is also still
+outstanding -- see this project's own README for that standard before
+treating this lexer as done.
 
 Sections actually read and reflected below: 6.2-6.6 (Structure/Tokens),
 7-10 (Types/Terms/Methods/Conversions), 18 (Class), 19 (Do), 20 (Exit),
 21 (If), 22 (Import), 23 (Iterate), 24 (Leave), 25 (Loop), 26 (Method),
 27 (Nop), 28 (Numeric), 29 (Options), 30 (Package), 31 (Parse, partial
--- the special-word notes only), 32 (Properties).
+-- the special-word notes only), 32 (Properties), 33 (Return), 34
+(Say), 35 (Select), 36 (Signal), 37 (Trace), 38 (Program structure),
+39 (Minor and Dependent classes), 40.1 (Special names).
 """
 
 import re
@@ -172,18 +169,24 @@ _DECLARATION_KEYWORDS = (
     # properties modifier (some already covered above; static/abstract/
     # final/constant recur across class/method/properties per the NRL)
     "binary", "deprecated", "unused", "protect", "uses", "signals",
+    # "dependent" -- Minor and Dependent classes (NRL Sec 39.2): a
+    # child class modifier giving it simplified access to its parent
+    # object's properties. Confirmed real this pass, not in the
+    # original guess set.
+    "dependent",
 )
 
-# Instruction/control-flow keywords. "select" "when" "otherwise"
-# "return" "say" "signal" "interpret" "trace" "new" "this" "super" are
-# confirmed to exist as real NetRexx instructions/special words (seen
-# in the NRL's table of contents and cross-references) but their full
-# grammar sections (pp97-112, 121-153) haven't been read yet -- see
-# this module's docstring "Explicitly NOT yet covered". Everything
-# else below (if/then/else/do/end/loop/leave/iterate/label/protect/
-# catch/finally/to/by/for/while/until/forever/over/exit/nop/import/
-# package/numeric/digits/form/scientific/engineering/options) is
-# confirmed against the actual instruction-grammar sections read.
+# Instruction/control-flow keywords, now confirmed against every
+# instruction-grammar section in the NRL (Sec 18-38: Class through
+# Program structure) -- no more "seen in the table of contents but not
+# the grammar" entries left in this list; see this module's docstring
+# for the remaining truly-unread sections (Exceptions, JavaBean
+# Support, Parsing templates, Numbers and Arithmetic, built-in
+# Rexx-string methods).
+#
+# CORRECTIONS from this pass: "case" (Select instruction, Sec 35.3)
+# and the Trace instruction's own sub-keywords (all/methods/off/
+# results/var, Sec 37) were missing entirely.
 #
 # CORRECTIONS from the first pass: "call" and "arg" removed -- neither
 # is a real NetRexx keyword. NetRexx has no classic-Rexx CALL
@@ -193,13 +196,43 @@ _DECLARATION_KEYWORDS = (
 # (Sec 31 Parse instruction, footnote): "`parse arg template`... will
 # work... even though **arg is not a keyword** in this case" -- it's
 # just the conventional name of the variable holding command args.
+# "new" removed -- never verified, and now positively contradicted:
+# every constructor example in the NRL (Sec 9.5 Constructor methods,
+# Sec 39 Minor/Dependent classes) constructs objects as
+# `ClassName(args)` with no "new" keyword anywhere. NetRexx has no
+# Java-style `new` operator.
 _KEYWORDS = (
     "if", "then", "else", "do", "end", "loop", "leave", "iterate",
     "label", "catch", "finally", "to", "by", "for", "while", "until",
     "forever", "over", "exit", "nop", "import", "package", "options",
     "numeric", "digits", "form", "scientific", "engineering",
-    "select", "when", "otherwise", "return", "say", "parse", "signal",
-    "trace", "interpret", "this", "super", "new",
+    "select", "when", "otherwise", "case", "return", "say", "parse",
+    "signal", "trace", "interpret",
+    "all", "methods", "off", "results", "var",  # trace sub-keywords
+)
+
+# Special names (NRL Sec 40.1): recognized specially, but explicitly
+# and repeatedly stated NOT to be reserved words -- "these may only be
+# used alone as a term... they are not reserved; they may be used as
+# variable names instead, if desired." This is a real, documented
+# difference from _KEYWORDS/_DECLARATION_KEYWORDS above (which ARE
+# reserved), so it gets its own token type (Keyword.Pseudo, the same
+# category Pygments uses for e.g. Python's self/cls -- recognized by
+# convention, not grammar). CORRECTION: "this" and "super" were
+# wrongly filed under _KEYWORDS (Keyword.Reserved) in the first pass;
+# moved here, since the NRL places them in this same special-names
+# list, not among the true reserved instruction keywords.
+# "digits" and "form" are deliberately NOT repeated here even though
+# the NRL lists them among the special names too (retrieving the
+# current `numeric digits`/`numeric form` setting) -- they're already
+# in _KEYWORDS above for the `numeric digits`/`numeric form`
+# sub-keyword position, and duplicating the same literal into a second
+# words() alternation would just make one of the two rules dead code.
+# Simplification, not an omission: both roles exist, only one token
+# type is picked.
+_SPECIAL_NAMES = (
+    "ask", "asknoecho", "class", "length", "this", "super", "version",
+    "parent", "source",
 )
 
 
@@ -280,6 +313,7 @@ class NetRexxLexer(RegexLexer):
             ),
             include("declaration_keyword"),
             include("keyword"),
+            include("special_name"),
             include("operator"),
             (_SYMBOL, Text),
         ],
@@ -289,6 +323,18 @@ class NetRexxLexer(RegexLexer):
         ],
         "keyword": [
             (words(_KEYWORDS, prefix=r"\b", suffix=r"\b"), Keyword.Reserved),
+        ],
+        # NRL Sec 40.1 special names: recognized specially but NOT
+        # reserved (see _SPECIAL_NAMES above for the exact quote).
+        # "class" here is the String.class-style special-name usage
+        # (Sec 40.1's own example, `obj=String.class`); it doesn't
+        # collide with the earlier `class NAME` declaration rule above,
+        # which only matches "class" immediately followed by
+        # whitespace and a name, never "class" on its own or after a
+        # dot.
+        "special_name": [
+            (words(_SPECIAL_NAMES, prefix=r"\b", suffix=r"\b"),
+             Keyword.Pseudo),
         ],
         "operator": [
             (
