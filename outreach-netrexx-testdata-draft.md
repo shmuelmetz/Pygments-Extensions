@@ -1,5 +1,15 @@
 **Venue:** groups.io/g/netrexx (NetRexx Forum), cross-posted to
-main@rexxla-members.groups.io
+main@rexxla-members.groups.io and IBM-MAIN. IBM-MAIN is not a
+mismatch here despite NetRexx being JVM-based -- zAAP (introduced
+2004, explicitly for Java/XML workloads under z/OS, folded into zIIP
+from z13 in 2015 onward) has given mainframe shops a real, cost-driven
+incentive to run Java -- and therefore NetRexx -- directly on z/OS for
+two decades, a live topic there even now via COBOL-to-Java
+modernization work. That's a genuinely different, and arguably more
+valuable, population than the NetRexx/RexxLA forums: real enterprise
+z/OS NetRexx source, not hobbyist samples. Frame the IBM-MAIN post
+around that angle specifically rather than reusing the NetRexx-forum
+text verbatim (see the alternate opening below).
 
 **Subject:** New Pygments lexer for NetRexx — looking for real-world
 .nrx source and reviewers
@@ -49,3 +59,18 @@ real, attributable code than write more synthetic samples.
 
 Thanks,
 Shmuel (Seymour J. Metz)
+
+---
+
+**Alternate opening for the IBM-MAIN cross-post** (same body from "The
+lexer is built independently..." onward, swap the intro paragraph):
+
+Hi all,
+
+I maintain a set of Pygments (Python syntax-highlighting library)
+lexers, already covering Open Object Rexx and PL/I, and have just
+added one for NetRexx. Given zAAP/zIIP's long history of making Java
+workloads (and by extension NetRexx, which compiles to Java/JVM
+bytecode) cost-attractive to run directly on z/OS, I'm hoping some of
+you have real NetRexx source running under z/OS I could validate the
+lexer against -- old or current, small utility or full application.
