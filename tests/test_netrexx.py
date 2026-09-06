@@ -4,13 +4,16 @@ Tests for the NetRexx lexer.
 Run with: pytest tests/test_netrexx.py
 (requires the dev extra: pip install -e .[dev])
 
-Every fragment here is taken verbatim (or near-verbatim) from the
+Most fragments here are taken verbatim (or near-verbatim) from the
 official NetRexx Tutorial (netrexx.org/Tutorial/nr_6.html and
-nr_11.html) -- see netrexx.py's module docstring for the citation.
-This is a first-pass smoke-test suite covering only what's been
-verified against those two pages; it is NOT the real-world-corpus
-validation this project's README holds up as the readiness bar for
-OORexxLexer/PLILexer.
+nr_11.html) or the NetRexx Language Reference (NRL) -- see netrexx.py's
+module docstring for the full citation history. The
+"Real-world validation" section below that point in this file adds
+this project's own real-world-corpus validation pass (2026-09-06,
+against the NetRexx project's own reference-implementation source
+tree) -- see netrexx.py's module docstring for what that pass found
+and fixed. `test_sample_files_lex_without_error` below is the same
+kind of corpus check OORexxLexer/PLILexer both have.
 """
 
 import pathlib
@@ -18,6 +21,7 @@ import pathlib
 import pytest
 from pygments.token import (
     Comment,
+    Error,
     Keyword,
     Name,
     Number,
@@ -28,6 +32,8 @@ from pygments.token import (
 )
 
 from pygments_extensions.lexers.netrexx import NetRexxLexer
+
+SAMPLES_DIR = pathlib.Path(__file__).parent.parent / "samples" / "netrexx"
 
 
 @pytest.fixture
@@ -132,14 +138,84 @@ def test_binary_numeric_symbol():
 
 
 def test_symbol_charset_excludes_ooRexx_extras():
-    # NRL Sec 6.3: NetRexx symbols are letters/digits/_/$/euro only --
-    # unlike classic Rexx/ooRexx, "@ # ! ?" are NOT symbol characters.
-    # "a@b" must therefore NOT lex as one symbol token.
+    # NRL Sec 6.3: NetRexx symbols are letters/digits/_/$/euro (plus
+    # Unicode "extra letters"/"extra digits", see
+    # test_unicode_extra_letters_and_digits below) -- unlike classic
+    # Rexx/ooRexx, "# ! ?" are NOT symbol characters. "@" is excluded
+    # too, but for a more specific reason since 2026-09-06: it's the
+    # NRL Sec 4.1 annotation marker (see test_annotation_* below), not
+    # a symbol character or a stray Error -- "a#b" stays the plain
+    # negative case for the ooRexx-extras charset itself.
     lexer = NetRexxLexer()
-    toks = _tokens_no_whitespace(lexer, "a@b")
-    assert (Text, "a@b") not in toks
+    toks = _tokens_no_whitespace(lexer, "a#b")
+    assert (Text, "a#b") not in toks
     assert (Text, "a") in toks
     assert (Text, "b") in toks
+
+
+# --- Real-world validation, 2026-09-06 (see netrexx.py's module
+# docstring "Real-world validation" section for the full corpus and
+# the exact files each of these was drawn from) ---
+
+
+def test_shebang_first_line():
+    # NRL Sec 3.3.2 "Shebang" (5.10-BETA): "#!" as the true first line
+    # is ignored by the translator. Real form, from the project's own
+    # examples/rexxtry.nrx: "#!/usr/bin/env nr".
+    lexer = NetRexxLexer()
+    text = "#!/usr/bin/env nr\nsay 'hi'\n"
+    toks = list(lexer.get_tokens(text))
+    assert toks[0] == (Comment.Hashbang, "#!/usr/bin/env nr\n")
+    assert (Keyword.Reserved, "say") in toks
+
+
+def test_shebang_only_recognized_on_true_first_line():
+    # A "#!" on any later line is NOT a shebang (NRL: "the first line
+    # in a script") -- confirms the "\A" anchor, not "^", is doing the
+    # work, since this lexer otherwise runs under re.MULTILINE.
+    lexer = NetRexxLexer()
+    text = "say 'hi'\n#!/usr/bin/env nr\n"
+    toks = list(lexer.get_tokens(text))
+    assert (Comment.Hashbang, "#!/usr/bin/env nr\n") not in toks
+
+
+def test_annotation_bare():
+    # NRL Sec 4.1: "@Override" etc. Real form, from
+    # examples/new-3.06/annotations/AnnotateTest.nrx.
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(NetRexxLexer(), "@Override")
+    assert toks == [(Name.Decorator, "@Override")]
+
+
+def test_annotation_with_arguments_passed_through():
+    # NRL Sec 4.1: "is passed through unchanged" -- the parenthesized
+    # argument expression (here a plain string literal) isn't part of
+    # the annotation's own token, it just falls through to the
+    # existing operator/string rules. Real form (values changed),
+    # from the same AnnotateTest.nrx: '@Author(name="Class Author")'.
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, '@Author(name="Class Author")')
+    assert toks[0] == (Name.Decorator, "@Author")
+    assert (Operator, "(") in toks
+    assert (String, '"') in toks
+    assert (String, "Class Author") in toks
+
+
+def test_unicode_extra_letters_and_digits():
+    # NRL Sec 3.3.3 (5.10-BETA): "Implementations may also allow other
+    # alphabetic and numeric characters in symbols... known as extra
+    # letters and extra digits." Real forms, from
+    # src/org/netrexx/diag/DiagUTF8.nrx: a symbol containing an
+    # Arabic-Indic digit character (not at the start, since NRL Sec
+    # 3.3.3 draws the same letter-starts/digit-continues distinction
+    # for extra characters as for the plain-ASCII case), and a numeric
+    # literal written entirely in Arabic-Indic digits.
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, "foo١")
+    assert toks == [(Text, "foo١")]
+
+    toks = _tokens_no_whitespace(lexer, "num=١١")
+    assert (Number, "١١") in toks
 
 
 def test_class_header_simple():
@@ -377,3 +453,18 @@ def test_no_crash_on_full_class_snippet():
     toks = list(lexer.get_tokens(text))
     error_toks = [v for t, v in toks if "Error" in str(t)]
     assert error_toks == []
+
+
+def test_sample_files_lex_without_error(lexer):
+    # Real-world corpus check, matching OORexxLexer's/PLILexer's own
+    # (see tests/test_oorexx.py's test_sample_files_lex_without_error).
+    # Covers samples/netrexx/real-world/from-netrexx-project/ -- see
+    # that directory's README.md and this module's "Real-world
+    # validation" section above for what this found and fixed.
+    sample_files = list(SAMPLES_DIR.rglob("*.nrx"))
+    assert sample_files, "expected at least one sample file"
+    for path in sample_files:
+        text = path.read_text(encoding="utf-8")
+        toks = list(lexer.get_tokens(text))
+        error_toks = [(t, v) for t, v in toks if t is Error]
+        assert not error_toks, f"Error tokens in {path}: {error_toks}"

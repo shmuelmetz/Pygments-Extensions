@@ -1,0 +1,18 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/examples/rosettacode/FizzBuzz.nrx
+Project: NetRexx (the official RexxLA/IBM reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx/real-world/README.md.
+----------------------------------------------------------------------------*/
+/* Rosettacode Fizzbuzz task */
+loop j=1 for 100
+  select
+    when j//15==0 then say 'FizzBuzz'
+    when j//5==0  then say 'Buzz'
+    when j//3==0  then say 'Fizz'
+    otherwise say j.right(4)
+  end
+end

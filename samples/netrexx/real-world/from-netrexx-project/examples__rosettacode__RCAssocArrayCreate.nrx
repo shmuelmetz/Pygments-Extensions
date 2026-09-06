@@ -1,0 +1,21 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/examples/rosettacode/RCAssocArrayCreate.nrx
+Project: NetRexx (the official RexxLA/IBM reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx/real-world/README.md.
+----------------------------------------------------------------------------*/
+/* NetRexx */
+ 
+options replace format comments java symbols
+ 
+key0 = '0'
+key1 = 'key0'
+ 
+hash = '.'            -- Initialize the associative array 'hash' to '.'
+hash[key1] = 'value0' -- Set a specific key/value pair
+ 
+say '<hash key="'key0'" value="'hash[key0]'" />' -- Display a value for a key that wasn't set
+say '<hash key="'key1'" value="'hash[key1]'" />' -- Display a value for a key that was set

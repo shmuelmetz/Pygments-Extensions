@@ -1,0 +1,66 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/src/netrexx/lang/RexxNode.nrx
+Project: NetRexx (the official RexxLA/IBM reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx/real-world/README.md.
+----------------------------------------------------------------------------*/
+/* IBM Materials Licensed under International Components for Unicode  */
+/* Licence version 1.8.1 (ICU Licence) - Property of IBM              */
+/* IBM NetRexx                                                        */
+/* Copyright (c) 1995-2009 IBM Corp.                                  */
+/* Copyright (c) 2011- RexxLA                                         */
+/* ------------------------------------------------------------------ */
+/* netrexx.lang.RexxNode -- node in a Rexx stem structure             */
+/* ------------------------------------------------------------------ */
+/* Copyright IBM Corporation, 1996, 1998.  All Rights Reserved.       */
+/* Author    Mike Cowlishaw                                           */
+/*                                                                    */
+/* ------------------------------------------------------------------ */
+/* Circularity: this class and the Rexx class interdepend.  To        */
+/* bootstrap, add this class to Rexx.nrx, as private; compile both    */
+/* together, then compile this and then the original Rexx.nrx         */
+/* [1998 -- use NetRexx compile-together option]                      */
+/* ------------------------------------------------------------------ */
+/* Note:                                                              */
+/*   -- this is just a data proxy; no function resides here.          */
+/*   -- this is quite profligate on storage; first reference to an    */
+/*      unknown node will allocate a new RexxNode and a new Rexx      */
+/*      object                                                        */
+/* ------------------------------------------------------------------ */
+/* 96.03.10 Initial version (template)                                */
+/* 96.03.15 First working version -- linear linked list               */
+/* 96.03.23 Changed to a data proxy                                   */
+/* 96.09.20 Save initial setting reference, so we can detect sets     */
+/*          for the exists() test                                     */
+
+package netrexx.lang
+options binary strictargs nodecimal
+
+/**
+   This class defines a Rexx stem node; it is used to provide a
+   reference to a Rexx object.
+ */
+
+class RexxNode final implements Serializable
+
+  /* ----- Properties ----- */
+  properties private constant unused
+  serialVersionUID=long 8264773171964048868
+
+
+  properties public
+    /** The data item owned by this node.  */
+    leaf=Rexx
+
+    /** The data item when the node was constructed.  */
+    initleaf=Rexx
+
+  /* ----- Constructors ----- */
+  /** Make a Rexx node */
+  method RexxNode(argleaf=Rexx)
+    leaf=argleaf
+    initleaf=argleaf
+

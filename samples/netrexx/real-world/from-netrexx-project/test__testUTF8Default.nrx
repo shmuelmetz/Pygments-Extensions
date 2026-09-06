@@ -1,0 +1,68 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/test/testUTF8Default.nrx
+Project: NetRexx (the official RexxLA/IBM reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx/real-world/README.md.
+----------------------------------------------------------------------------*/
+class testUTF8Default
+
+properties indirect
+π = '3.1415926585979'
+pi = '3.1415926585979'
+
+  method héhé() static
+    René = '42'
+    say René'€'
+    €='euro'
+    say €
+    
+  -- method c©opyright()
+  --   say 'just say no'
+    
+    /* sum it up */ -- sigma is no letter so no dice
+		    -- method ∑() static
+		    --   return π
+    
+  method Σgreek()
+	say "the greek sigma"
+
+  method main(args=String[]) static
+    héhé()
+    u = testUTF8Default()
+    -- say ∑()
+    -- u.getπ()
+    say u.getPi()
+    say '€ isLetter:' Character.isLetter('€')
+    say 'π isLetter:' Character.isLetter('π')
+    say '∑ isLetter:' Character.isLetter('∑')
+    say 'Σ isLetter:' Character.isLetter('Σ')    
+
+    say '€ isJavaIdentifierStart:' Character.isJavaIdentifierStart('€')
+    say 'π isJavaIdentifierStart:' Character.isJavaIdentifierStart('π')
+    say '∑ isJavaIdentifierStart:' Character.isJavaIdentifierStart('∑')
+    say 'Σ isJavaIdentifierStart:' Character.isJavaIdentifierStart('Σ')
+    say '© isJavaIdentifierStart:' Character.isJavaIdentifierStart('©')
+
+    say '€ isJavaIdentifierPart:' Character.isJavaIdentifierPart('€')
+    say 'π isJavaIdentifierPart:' Character.isJavaIdentifierPart('π')
+    say '∑ isJavaIdentifierPart:' Character.isJavaIdentifierPart('∑')
+    say 'Σ isJavaIdentifierPart:' Character.isJavaIdentifierPart('Σ')
+    say '© isJavaIdentifierPart:' Character.isJavaIdentifierPart('©')
+
+    say '"π".datatype("S"):' 'π'.datatype("S")
+    greek = 'αβγδεζηθικλμνξοπρστυφχψω'
+    say greek
+    say greek.upper()
+	u.Σgreek()
+
+	--    πsaygoodbye()
+    
+  method πsaygoodbye() static
+    say 'Goodbye World!'
+    
+	--  method getπ()
+	--    say π
+    

@@ -1,0 +1,46 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/src/netrexx/lang/BadArgumentException.nrx
+Project: NetRexx (the official RexxLA/IBM reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx/real-world/README.md.
+----------------------------------------------------------------------------*/
+/* IBM Materials Licensed under International Components for Unicode  */
+/* Licence version 1.8.1 (ICU Licence) - Property of IBM              */
+/* IBM NetRexx                                                        */
+/* Copyright (c) 1995-2009 IBM Corp.                                  */
+/* Copyright (c) 2011- RexxLA                                         */
+/* ------------------------------------------------------------------ */
+/* netrexx.lang.BadArgumentException                                  */
+/* ------------------------------------------------------------------ */
+/* Copyright IBM Corporation, 1996, 1997.  All Rights Reserved.       */
+/* Author: Mike Cowlishaw                                             */
+/*                                                                    */
+/* Must be compiled with binary defaults; must not use Rexx class     */
+/* ------------------------------------------------------------------ */
+/* 96.02.16 Initial version in NetRexx                                */
+package netrexx.lang
+options binary strictargs nodecimal
+
+/**
+   Signals that a bad argument was found in a Rexx method
+   invocation.
+ */
+class BadArgumentException extends RuntimeException
+
+  properties private constant unused
+  serialVersionUID=long -7778165251054117523
+  
+  /**
+     Constructs a BadArgumentException with no detail message.
+     A detail message is a String that describes this particular exception.
+   */
+  method BadArgumentException; super()
+    
+  /**
+     Constructs a BadArgumentException with a detail message.
+     A detail message is a String that describes this particular exception.
+   */
+  method BadArgumentException(arg=String); super(arg)

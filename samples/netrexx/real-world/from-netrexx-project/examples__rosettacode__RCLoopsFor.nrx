@@ -1,0 +1,22 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/examples/rosettacode/RCLoopsFor.nrx
+Project: NetRexx (the official RexxLA/IBM reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx/real-world/README.md.
+----------------------------------------------------------------------------*/
+/* NetRexx */
+options replace format comments java symbols nobinary
+
+  say
+  say 'Loops/For'
+
+  loop i_ = 1 to 5
+    loop for i_
+      say '*\-'
+      end
+    say
+    end i_
+

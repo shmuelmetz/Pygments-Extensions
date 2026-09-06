@@ -99,18 +99,90 @@ Also verified from the same NRL sections, now reflected below:
 
 The entire NRL body (Sec 6-50, all instructions, all special names,
 the complete built-in-method reference table, and both appendices) has
-now been read -- see the section list below. What's genuinely still
-outstanding is real-world corpus validation of the kind OORexxLexer
-and PLILexer both received before being considered real-world-ready
-(this lexer has 107 tests, all hand-written against the NRL's own
-examples, and has not yet seen a single line of real .nrx source) --
-see this project's own README for that standard before treating this
-lexer as done. A handful of exception/condition TYPE NAMES from
-Appendix B (BadArgumentException, DivideException, etc.) are used only
-as ordinary class-name arguments to `catch`, and correctly fall
-through as plain symbols already -- not a gap needing a dedicated
-keyword list, the same way `extends`/`implements` type-name arguments
-already work.
+now been read -- see the section list below. A handful of
+exception/condition TYPE NAMES from Appendix B (BadArgumentException,
+DivideException, etc.) are used only as ordinary class-name arguments
+to `catch`, and correctly fall through as plain symbols already -- not
+a gap needing a dedicated keyword list, the same way
+`extends`/`implements` type-name arguments already work.
+
+Real-world validation, 2026-09-06: run against the NetRexx project's
+own reference-implementation source tree (sourceforge.net/p/netrexx,
+cloned via ``git.code.sf.net/p/netrexx/code``) -- 912 real ``.nrx``
+files spanning the compiler's self-hosted source (``src/org``,
+``src/netrexx``), its diagnostic/unit-test suite, and the
+``examples/`` tree (rosettacode, the NetRexx "Red Book", ibm-historic,
+xclasses, etc.). Zero crashes; before the fixes below, 8 files/116
+Error tokens, all three genuine, all now fixed:
+
+* Symbols: the NRL's own "extra letters"/"extra digits" allowance
+  (Sec 3.3.3 in the current 5.10-BETA edition, corresponding to the
+  4.02-GA edition's Sec 6.3 cited above) -- "Implementations may also
+  allow other alphabetic and numeric characters in symbols to improve
+  the readability of programs in languages other than English" -- was
+  previously deliberately left unmodeled (see the correction history
+  above). The corpus proved that call wrong: the reference
+  implementation itself both documents (footnote 21: "implementations
+  of NetRexx will be based on Unicode or a similarly rich character
+  set") and exercises this, in its own diagnostic fixtures
+  (``src/org/netrexx/diag/DiagUTF8.nrx``, ``test/testUTF8Default.nrx``)
+  and examples (``examples/unicode/UnicodeDemo.nrx``, and
+  ``UnicodeDémo.nrx`` -- non-ASCII even in the filename). Fixed by
+  widening ``_SYMBOL_START``/``_SYMBOL_CHAR`` to any Unicode "word"
+  character (Python's ``\\w`` under a ``str`` pattern is Unicode-aware
+  by default, no extra flag needed) rather than bare ``[a-z]``/
+  ``[a-z0-9]``, in addition to the always-allowed ``_ $ €``.
+* Shebang: two files (``examples/rexxtry.nrx``, the project's own
+  interactive try-it script, and its ``-org`` predecessor) open with
+  ``#!/usr/bin/env nr``. This turns out to be real, spec-level syntax
+  in the current NRL, not merely a convention: Sec 3.3.2 ("Comments")
+  in the 5.10-BETA edition adds an explicit "Shebang" subsection --
+  "NetRexx supports shebang on supported operating systems/shells. A
+  shebang defines the first line in a script as #! followed by the
+  program which executes the script. The translator ignores such
+  line." Not present under this name in the 4.02-GA edition this
+  lexer was originally built against -- a genuine language addition
+  between editions, not a first-pass miss. Fixed with a
+  ``Comment.Hashbang`` rule anchored to the true start of the file
+  (``\\A``, not ``^``, since only the literal first line qualifies).
+* Annotations: ``@Override``, ``@Author(name="...")``, etc. appear
+  throughout ``examples/new-3.06/annotations/AnnotateTest.nrx`` and
+  its ``@SuppressWarnings``/``@Deprecated`` cousins elsewhere in the
+  tree. Like shebang, this is a genuine post-4.02 language addition:
+  the 5.10-BETA edition's Sec 4.1 "Annotation instruction" states
+  outright (footnote 47) "The Annotation instruction is not part of
+  the original NetRexx language but is added due to the fact that
+  Java programs sometimes require the use of annotations" -- and Sec
+  4.1's own body: "An annotation starts with an @ (commercial at
+  sign) and is passed through unchanged. To interpret a program with
+  an annotation is an error." Fixed with an ``@`` + symbol rule
+  tokenized as ``Name.Decorator`` (matching Pygments' own convention
+  for the equivalent Python/Java decorator/annotation syntax), placed
+  before the generic symbol catch-all; anything after the symbol
+  (a parenthesized argument list, if present) falls through to the
+  existing operator/string/number rules unchanged, matching "passed
+  through unchanged" -- this lexer never needs to parse the argument
+  expression itself.
+
+One corpus file, ``tools/epm/EPMKWDS.NRX``, was excluded rather than
+fixed for: inspection shows it is not NetRexx source at all -- it is
+an IBM EPM (OS/2-era Enhanced Editor) keywords-highlighting
+configuration file that happens to share the ``.NRX`` extension by
+sheer coincidence (its own header: "Sample of keywords file for the
+keywords highlighting feature of EPM"). A real false-positive
+extension collision, not a lexer defect; not included in
+``samples/netrexx/`` and not counted against this validation pass.
+
+Given the shebang and annotation findings above are confirmed
+additions to the language since the 4.02-GA edition this lexer was
+first built against, this module's earlier "verified against NetRexx
+4.02-GA" framing is now stale for those two constructs specifically;
+the reference implementation's own tree also carries a current
+``documentation/nrl/NetRexx 5.10 Language Reference.pdf`` (version
+5.10-BETA of 2026-03-04), which is what the citations immediately
+above are drawn from. The rest of this module's 4.02-GA-sourced rules
+were re-checked against nothing broader than what the corpus run
+above could exercise, and turned up no other discrepancies.
 
 Sections read: 6.2-6.6 (Structure/Tokens), 7-10 (Types/Terms/Methods/
 Conversions), 18 (Class), 19 (Do), 20 (Exit), 21 (If), 22 (Import), 23
@@ -149,7 +221,7 @@ from pygments.token import (
 __all__ = ["NetRexxLexer"]
 
 # A NetRexx "simple symbol" (identifier): Roman letters, digits, and
-# underscore/dollar/euro ONLY -- NRL Sec 6.3 "Symbols", verified
+# underscore/dollar/euro at minimum -- NRL Sec 6.3 "Symbols", verified
 # directly (see this module's docstring for the correction history;
 # this is NOT the same charset as classic Rexx/ooRexx's, which also
 # allow @ # ! ?). "." is excluded from the character class and handled
@@ -160,11 +232,29 @@ __all__ = ["NetRexxLexer"]
 # one). The euro sign is a real allowed character per the NRL (UTF-8
 # source only) but is included here as a literal for completeness
 # rather than a \w-based escape hatch.
-# Lowercase-only ranges are deliberate, not a gap: the lexer runs under
-# re.IGNORECASE (see `flags` below), so "[a-z]" already matches upper
-# case too -- same convention OORexxLexer's _SYMBOL_START/_CHAR use.
-_SYMBOL_START = r"[a-z_$€]"
-_SYMBOL_CHAR = r"[a-z0-9_$€]"
+#
+# Also allows the NRL's "extra letters"/"extra digits" (Sec 3.3.3 in
+# the 5.10-BETA edition): "Implementations may also allow other
+# alphabetic and numeric characters in symbols to improve the
+# readability of programs in languages other than English." Originally
+# left unmodeled here (see the correction history above); reversed
+# 2026-09-06 after real-world corpus validation against the NetRexx
+# project's own reference implementation showed it both documents and
+# uses this (see the module docstring's "Real-world validation"
+# section for the specific files). "\w" on a `str` pattern is
+# Unicode-aware by default in Python's `re` (no extra flag needed), so
+# "[^\W\d]" (a "\w" character that is not a digit -- i.e. a Unicode
+# letter or underscore) models "letter, including extra letters"
+# for a symbol's first character, and "\w" itself (letter, digit, or
+# underscore) models "letter or digit, including extra letters/
+# digits" for continuation.
+# Lowercase-only ASCII ranges are deliberate, not a gap: the lexer runs
+# under re.IGNORECASE (see `flags` below), so "[a-z]" already matches
+# upper case too -- same convention OORexxLexer's _SYMBOL_START/_CHAR
+# use; re.IGNORECASE doesn't affect "\w"/"[^\W\d]", which already match
+# both cases of every script Unicode considers a letter.
+_SYMBOL_START = r"(?:[^\W\d]|[$€])"
+_SYMBOL_CHAR = r"[\w$€]"
 _SYMBOL = _SYMBOL_START + _SYMBOL_CHAR + r"*"
 
 # Visibility/modifier-family keywords confirmed against the real NRL
@@ -292,6 +382,11 @@ class NetRexxLexer(RegexLexer):
 
     tokens = {
         "root": [
+            # Shebang: only the true first line of the file qualifies
+            # (NRL Sec 3.3.2, 5.10-BETA -- see module docstring), hence
+            # "\A" rather than "^" even though the lexer runs under
+            # re.MULTILINE for everything else.
+            (r"\A#!.*\n?", Comment.Hashbang),
             (r"\s+", Whitespace),
             (r"/\*", Comment.Multiline, "comment"),
             # Line comment: "--" to end of line. Per the NetRexx Tutorial
@@ -315,7 +410,17 @@ class NetRexxLexer(RegexLexer):
             # its own examples (17.3E-12, 3e+12, 0.03E+9) has one, and
             # footnote 21 confirms the sign is part of the symbol, not
             # a separate operator. Deliberately not "[+-]?" here.
-            (r"[0-9]+(\.[0-9]+)?([eE][+-][0-9]+)?", Number),
+            # "\d" (Unicode decimal digit, not bare "[0-9]") for the
+            # same "extra digits" reason as _SYMBOL_CHAR above --
+            # confirmed by real usage in the corpus validation pass
+            # (module docstring): src/org/netrexx/diag/DiagUTF8.nrx's
+            # `num=١١` (Arabic-Indic digits) is a real NetRexx numeric
+            # literal, not an identifier. The hex/binary rules just
+            # above stay ASCII-only deliberately -- "x"/"b" radix
+            # markers and hex a-f digits aren't decimal numerals, so
+            # the "extra digits" allowance doesn't apply to them, and
+            # the corpus exercised no non-ASCII usage there either.
+            (r"\d+(\.\d+)?([eE][+-]\d+)?", Number),
             # Class header: class NAME [public|private ...]
             # [extends SUPER] [implements IFACE, ...]
             (
@@ -364,6 +469,16 @@ class NetRexxLexer(RegexLexer):
                 r"(\.)(" + "|".join(_BUILTIN_METHODS) + r")\b",
                 bygroups(Operator, Name.Builtin),
             ),
+            # Annotation: @Symbol, e.g. @Override, @Author(name="...").
+            # NRL Sec 4.1 (5.10-BETA): "An annotation starts with an @
+            # (commercial at sign) and is passed through unchanged."
+            # Only the leading @Symbol is given its own token, matching
+            # Pygments' own convention for Python/Java decorators --
+            # anything after it (a parenthesized argument list, if
+            # present) is genuinely "passed through unchanged" here
+            # too, falling to the ordinary operator/string/number rules
+            # below rather than needing dedicated argument-list parsing.
+            (r"@" + _SYMBOL, Name.Decorator),
             include("operator"),
             (_SYMBOL, Text),
         ],
