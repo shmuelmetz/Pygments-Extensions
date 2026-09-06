@@ -328,6 +328,15 @@ def test_new_is_not_a_keyword():
     assert (Keyword.Pseudo, "new") not in toks
 
 
+def test_more_special_names_are_pseudo():
+    # NRL Sec 40.1, continued: null, RC, sourceline are also
+    # documented special names, not reserved words.
+    lexer = NetRexxLexer()
+    for word in ("null", "RC", "sourceline"):
+        toks = _tokens_no_whitespace(lexer, f"{word}\n")
+        assert (Keyword.Pseudo, word) in toks, f"{word!r} -> {toks}"
+
+
 def test_no_crash_on_full_class_snippet():
     # A fuller snippet combining several of the above constructs, per
     # the Tutorial's own vector3d example -- just checking this doesn't

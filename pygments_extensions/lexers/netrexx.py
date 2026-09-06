@@ -98,9 +98,8 @@ Also verified from the same NRL sections, now reflected below:
   dot rule to disambiguate against.
 
 Explicitly NOT yet covered, pending a fuller reference pass: NRL
-Sections 40.2 (Special methods), 41 (JavaBean Support), 42 (Parsing
-templates), 43-44 (Numbers and Arithmetic, Binary values), 45
-(Exceptions -- condition/exception-type names beyond the generic
+Sec 44 (Binary values and operations), 45 (Exceptions --
+condition/exception-type names beyond the generic
 `catch`/`finally`/`signals` grammar already covered), 46-48 (Thread
 Pool Support, Structured Lists, built-in `Rexx`-class string methods).
 Any real-world corpus validation of the kind OORexxLexer and PLILexer
@@ -111,10 +110,15 @@ treating this lexer as done.
 Sections actually read and reflected below: 6.2-6.6 (Structure/Tokens),
 7-10 (Types/Terms/Methods/Conversions), 18 (Class), 19 (Do), 20 (Exit),
 21 (If), 22 (Import), 23 (Iterate), 24 (Leave), 25 (Loop), 26 (Method),
-27 (Nop), 28 (Numeric), 29 (Options), 30 (Package), 31 (Parse, partial
--- the special-word notes only), 32 (Properties), 33 (Return), 34
-(Say), 35 (Select), 36 (Signal), 37 (Trace), 38 (Program structure),
-39 (Minor and Dependent classes), 40.1 (Special names).
+27 (Nop), 28 (Numeric), 29 (Options), 30 (Package), 31 (Parse), 32
+(Properties), 33 (Return), 34 (Say), 35 (Select), 36 (Signal), 37
+(Trace), 38 (Program structure), 39 (Minor and Dependent classes), 40
+(Special names and methods, full), 41 (JavaBean Support), 42 (Parsing
+templates), 43 (Numbers and Arithmetic). 42 and 43 introduced no new
+lexical rules -- parsing-template syntax (literal/positional patterns,
+the "." placeholder) and arithmetic semantics are both expressed using
+tokens already covered (strings, numbers, operators, symbols); nothing
+there needed a new token class.
 """
 
 import re
@@ -233,6 +237,10 @@ _KEYWORDS = (
 _SPECIAL_NAMES = (
     "ask", "asknoecho", "class", "length", "this", "super", "version",
     "parent", "source",
+    # Confirmed same section, continued (p122-123): null (the "empty
+    # reference" value), RC (returncode of the last ADDRESSed
+    # command), sourceline (current clause's line number).
+    "null", "rc", "sourceline",
 )
 
 
