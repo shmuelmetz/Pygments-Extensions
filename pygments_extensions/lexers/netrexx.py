@@ -97,28 +97,39 @@ Also verified from the same NRL sections, now reflected below:
   environment-directory-lookup concept or cascading-send syntax for a
   dot rule to disambiguate against.
 
-Explicitly NOT yet covered, pending a fuller reference pass: NRL
-Sec 44 (Binary values and operations), 45 (Exceptions --
-condition/exception-type names beyond the generic
-`catch`/`finally`/`signals` grammar already covered), 46-48 (Thread
-Pool Support, Structured Lists, built-in `Rexx`-class string methods).
-Any real-world corpus validation of the kind OORexxLexer and PLILexer
-both received before being considered real-world-ready is also still
-outstanding -- see this project's own README for that standard before
-treating this lexer as done.
+The entire NRL body (Sec 6-50, all instructions, all special names,
+the complete built-in-method reference table, and both appendices) has
+now been read -- see the section list below. What's genuinely still
+outstanding is real-world corpus validation of the kind OORexxLexer
+and PLILexer both received before being considered real-world-ready
+(this lexer has 107 tests, all hand-written against the NRL's own
+examples, and has not yet seen a single line of real .nrx source) --
+see this project's own README for that standard before treating this
+lexer as done. A handful of exception/condition TYPE NAMES from
+Appendix B (BadArgumentException, DivideException, etc.) are used only
+as ordinary class-name arguments to `catch`, and correctly fall
+through as plain symbols already -- not a gap needing a dedicated
+keyword list, the same way `extends`/`implements` type-name arguments
+already work.
 
-Sections actually read and reflected below: 6.2-6.6 (Structure/Tokens),
-7-10 (Types/Terms/Methods/Conversions), 18 (Class), 19 (Do), 20 (Exit),
-21 (If), 22 (Import), 23 (Iterate), 24 (Leave), 25 (Loop), 26 (Method),
-27 (Nop), 28 (Numeric), 29 (Options), 30 (Package), 31 (Parse), 32
-(Properties), 33 (Return), 34 (Say), 35 (Select), 36 (Signal), 37
-(Trace), 38 (Program structure), 39 (Minor and Dependent classes), 40
-(Special names and methods, full), 41 (JavaBean Support), 42 (Parsing
-templates), 43 (Numbers and Arithmetic). 42 and 43 introduced no new
-lexical rules -- parsing-template syntax (literal/positional patterns,
-the "." placeholder) and arithmetic semantics are both expressed using
-tokens already covered (strings, numbers, operators, symbols); nothing
-there needed a new token class.
+Sections read: 6.2-6.6 (Structure/Tokens), 7-10 (Types/Terms/Methods/
+Conversions), 18 (Class), 19 (Do), 20 (Exit), 21 (If), 22 (Import), 23
+(Iterate), 24 (Leave), 25 (Loop), 26 (Method), 27 (Nop), 28 (Numeric),
+29 (Options), 30 (Package), 31 (Parse), 32 (Properties), 33 (Return),
+34 (Say), 35 (Select), 36 (Signal), 37 (Trace), 38 (Program
+structure), 39 (Minor and Dependent classes), 40 (Special names and
+methods, full), 41 (JavaBean Support), 42 (Parsing templates), 43
+(Numbers and Arithmetic), 44 (Binary values and operations), 45
+(Exceptions), 46 (Thread Pool Support), 47 (Structured Lists
+Interface), 48 (built-in Rexx-string methods, full), 49-50 (Appendix
+A sample program, Appendix B netrexx.lang package overview). Sections
+42-47 and the appendices introduced no new lexical rules -- their
+syntax (parsing-template patterns, arithmetic, binary-class
+semantics, exception handling, thread-pool/structured-list method
+calls, the sample program) is all expressed in tokens already covered
+(strings, numbers, operators, symbols, dot-notation calls); only 48
+added something new (the built-in-method Name.Builtin highlighting
+below).
 """
 
 import re
@@ -243,6 +254,25 @@ _SPECIAL_NAMES = (
     "null", "rc", "sourceline",
 )
 
+# Built-in methods of the NetRexx string class Rexx (NRL Sec 48, full
+# list p159-176) -- always called via dot-notation (string.method()),
+# never bare like classic Rexx's BIFs, so they get their own dot-call
+# rule below rather than living in _BUILTIN_FUNCTIONS-style bare-call
+# handling. "length" is deliberately excluded: it's already in
+# _SPECIAL_NAMES (NRL Sec 40.1 documents both the special-name and
+# zero-arg-method spellings as equivalent; picking one token type,
+# same simplification as digits/form above).
+_BUILTIN_METHODS = (
+    "abbrev", "abs", "b2d", "b2x", "center", "centre", "changestr",
+    "compare", "copies", "copyindexed", "countstr", "c2d", "c2x",
+    "datatype", "date", "delstr", "delword", "exists", "format",
+    "insert", "lastpos", "left", "lower", "max", "min", "overlay",
+    "pos", "reverse", "right", "sequence", "sign", "soundex", "space",
+    "strip", "substr", "subword", "time", "translate", "trunc",
+    "upper", "verify", "word", "wordindex", "wordlength", "wordpos",
+    "words", "x2b", "x2c", "x2d",
+)
+
 
 class NetRexxLexer(RegexLexer):
     """
@@ -322,6 +352,18 @@ class NetRexxLexer(RegexLexer):
             include("declaration_keyword"),
             include("keyword"),
             include("special_name"),
+            # Built-in method call: .methodname, e.g. string.abbrev(...).
+            # Must precede the generic operator rule below, which would
+            # otherwise claim the bare "." first and leave the method
+            # name to fall through as plain Text. Highlighting quality,
+            # not a correctness fix -- these already lexed fine as
+            # Operator(".") + Text(name); this makes them read as the
+            # recognizable built-ins they are, same as OORexxLexer does
+            # for classic Rexx's bare-call BIFs.
+            (
+                r"(\.)(" + "|".join(_BUILTIN_METHODS) + r")\b",
+                bygroups(Operator, Name.Builtin),
+            ),
             include("operator"),
             (_SYMBOL, Text),
         ],

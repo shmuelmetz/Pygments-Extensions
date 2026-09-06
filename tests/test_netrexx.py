@@ -337,6 +337,25 @@ def test_more_special_names_are_pseudo():
         assert (Keyword.Pseudo, word) in toks, f"{word!r} -> {toks}"
 
 
+def test_builtin_method_calls():
+    # NRL Sec 48, full list. A sample spanning the alphabet, not
+    # exhaustive -- the full 48-entry list is in _BUILTIN_METHODS.
+    lexer = NetRexxLexer()
+    for method in ("abbrev", "datatype", "left", "strip", "x2d"):
+        toks = _tokens_no_whitespace(lexer, f"n = s.{method}(1)\n")
+        assert (Name.Builtin, method) in toks, f"{method!r} -> {toks}"
+
+
+def test_length_stays_special_name_not_builtin():
+    # "length" is deliberately excluded from _BUILTIN_METHODS -- NRL
+    # Sec 40.1 documents it as a special name (array/string length),
+    # already covered there; not duplicated into Name.Builtin too.
+    lexer = NetRexxLexer()
+    toks = _tokens_no_whitespace(lexer, "n = s.length\n")
+    assert (Keyword.Pseudo, "length") in toks
+    assert (Name.Builtin, "length") not in toks
+
+
 def test_no_crash_on_full_class_snippet():
     # A fuller snippet combining several of the above constructs, per
     # the Tutorial's own vector3d example -- just checking this doesn't
