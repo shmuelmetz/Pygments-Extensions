@@ -1,77 +1,27 @@
-**Venue:** groups.io/g/netrexx (NetRexx Forum), posting address
-netrexx@groups.io, cross-posted to main@rexxla-members.groups.io and
-IBM-MAIN. IBM-MAIN is not a
-mismatch here despite NetRexx being JVM-based -- zAAP (introduced
-2004, explicitly for Java/XML workloads under z/OS, folded into zIIP
-from z13 in 2015 onward) has given mainframe shops a real, cost-driven
-incentive to run Java -- and therefore NetRexx -- directly on z/OS for
-two decades, a live topic there even now via COBOL-to-Java
-modernization work. That's a genuinely different, and arguably more
-valuable, population than the NetRexx/RexxLA forums: real enterprise
-z/OS NetRexx source, not hobbyist samples. Frame the IBM-MAIN post
-around that angle specifically rather than reusing the NetRexx-forum
-text verbatim (see the alternate opening below).
+**Subject:** New Pygments lexers for ooRexx, PL/I, and NetRexx — looking for real-world NetRexx source
 
-**Subject:** New Pygments lexer for NetRexx — looking for real-world
-.nrx source and reviewers
+**Distribution:** netrexx@groups.io, main@rexxla-members.groups.io, IBM-MAIN (cross-posted — apologies to anyone on more than one of these lists)
 
----
+**Body:**
 
 Hi all,
 
-I maintain [pygments-extensions](https://github.com/shmuelmetz/Pygments-Extensions),
-a set of Pygments (Python syntax-highlighting library) lexers already
-covering Open Object Rexx and PL/I. I've just added a first-pass
-NetRexx lexer and would like help validating it against real code
-before calling it ready.
+I maintain [pygments-extensions](https://github.com/shmuelmetz/Pygments-Extensions), a set of Pygments (the Python syntax-highlighting library) lexers for languages it doesn't otherwise support. It now covers three: Open Object Rexx, PL/I, and, as of this week, NetRexx.
 
-The lexer is built independently against the NetRexx 4.02-GA Language
-Reference (comments, string escapes, numeric symbols, class/method/
-properties declarations, type annotations) rather than adapted from
-the classic-Rexx or ooRexx lexers already in the project — NetRexx's
-Java-shaped class/method/type layer and dot-notation method calls
-don't share enough structure with either to make that a good fit.
-99 tests currently pass, all against hand-written snippets drawn from
-the Tutorial and Language Reference's own examples.
+The ooRexx and PL/I lexers are real-world-validated against a combined corpus of over 150 files (official interpreter samples, Rosetta Code, and personal/legacy scripts), with 72 passing tests between them.
 
-What I don't have yet is real .nrx source to test against, and that's
-historically where a from-the-spec lexer finds its actual gaps — the
-ooRexx and PL/I lexers here both had real bugs surface only once real
-code was thrown at them (a missing line-comment form, symbol-charset
-gaps, embedded-block handling), not from re-reading the spec harder.
+The NetRexx lexer is new and built independently against the actual NetRexx 4.02-GA Language Reference — not adapted from the classic-Rexx or ooRexx lexers already in the project, since NetRexx's Java-shaped class/method/type layer and dot-notation method calls (`v.mag()`, not ooRexx's `~` message-send) don't share enough structure with either. 104 tests currently pass, but all of them are hand-written against the Reference's own examples — it hasn't yet seen a single line of real NetRexx source.
 
-If you have NetRexx source you're willing to share — anything from a
-small utility to a full project — I'd be glad to run it through the
-lexer and fix whatever it gets wrong. Particularly useful:
+That's what I'm asking for: real `.nrx` code to validate the lexer against. The ooRexx and PL/I lexers here both had genuine bugs surface only once real code was thrown at them, not from re-reading the spec harder, and I expect the same will be true here. Particularly useful:
 
 - Real class hierarchies using `extends`/`implements`/`uses`
-- Binary classes/methods (the `binary` keyword)
-- `select`/`signal`/exception-handling code (catch/finally, signals
-  lists) — the grammar sections I haven't fully cross-checked yet
-- Anything using the built-in Rexx-class string methods, or Java
-  interop beyond simple `System.out`-style calls
-- Older or unusual NetRexx (pre-4.0, IBM-era) if you have it — I'd
-  like to know if anything's changed in ways that matter to a lexer
+- Binary classes or methods (the `binary` keyword)
+- `select`/`signal`/exception-handling code (catch/finally, signals lists)
+- Anything exercising the built-in Rexx-class string methods, or Java interop beyond simple calls
+- Code running under z/OS specifically — given zAAP's twenty-year history of making Java (and by extension NetRexx) workloads cost-attractive on the mainframe, and the current wave of COBOL-to-Java modernization, I'd particularly like to see real enterprise z/OS NetRexx if anyone has it
+- Older or IBM-era NetRexx, if anything's changed in ways that matter to a lexer
 
-Also useful, if anyone has it: pointers to other NetRexx source
-collections I could pull from directly (a GitHub org, an old FTP
-archive, Rosetta Code's NetRexx entries, etc.) — I'd rather work from
-real, attributable code than write more synthetic samples.
+Anything from a small utility to a full application is useful — I'll run it through the lexer and fix whatever it gets wrong. Pointers to other NetRexx source collections (a GitHub org, an archive, Rosetta Code entries) are just as welcome as code itself.
 
 Thanks,
 Shmuel (Seymour J. Metz)
-
----
-
-**Alternate opening for the IBM-MAIN cross-post** (same body from "The
-lexer is built independently..." onward, swap the intro paragraph):
-
-Hi all,
-
-I maintain a set of Pygments (Python syntax-highlighting library)
-lexers, already covering Open Object Rexx and PL/I, and have just
-added one for NetRexx. Given zAAP/zIIP's long history of making Java
-workloads (and by extension NetRexx, which compiles to Java/JVM
-bytecode) cost-attractive to run directly on z/OS, I'm hoping some of
-you have real NetRexx source running under z/OS I could validate the
-lexer against -- old or current, small utility or full application.
