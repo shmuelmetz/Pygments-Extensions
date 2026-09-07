@@ -202,6 +202,21 @@ calls, the sample program) is all expressed in tokens already covered
 (strings, numbers, operators, symbols, dot-notation calls); only 48
 added something new (the built-in-method Name.Builtin highlighting
 below).
+
+Real-world validation, 2026-09-07 (second pass): RexxLA member Jeff
+Hennick pointed out the same reference implementation's Pipelines
+subsystem -- a translator plus roughly 230 stage files, each using its
+own strategy to meet its requirements -- as further real-world source
+the first pass hadn't specifically targeted. Ran against all 258
+``.nrx`` files under ``src/org/netrexx/njpipes/`` (translator and
+every stage) plus the standalone test files in ``examples/pipes/`` and
+``test/``: zero Error tokens, no new defects. A representative slice
+(the translator and seven stages spanning the size range, plus one
+test file) is kept in ``samples/netrexx/real-world/
+from-netrexx-project/`` alongside the first pass's corpus -- see that
+directory's README.md. The ``.njp`` files alongside the ``.nrx`` test
+files are a separate, REXX-flavored pipe-specification format, not
+NetRexx source, and are out of scope for this lexer.
 """
 
 import re

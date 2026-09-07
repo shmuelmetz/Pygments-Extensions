@@ -1,0 +1,263 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/src/org/netrexx/njpipes/stages/sort.nrx
+Project: NetRexx (the official RexxLA/IBM reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx/real-world/README.md.
+----------------------------------------------------------------------------*/
+-- sort.nrx Pipelines stage
+/*
+ *  Copyright (C) 1997-2011 Ed Tomlinson
+ *  Copyright (C) 2020 Jeff Hennick  Jeff (at) Jeff (dash) H (dot) com
+ *
+ *  Distributed under the ICU 1.8.1 Licence with NO WARRANTIES of ANY kind.
+ *  See LICENSE for the licence and information on using, copying, modifying,
+ *  and distributing this program.
+ *
+ */
+
+/*
+  25/ 2/12 Add Tolerant/Strict; major rearangement of argument parsing.  Jeff Hennick
+  23/02/23 Documentation; givehelp(). Jeff Hennick
+  20/ 6/13 added SINGLEOK option. Jeff Hennick
+  20/ 5/20 expanded Ascending/Descending; documentation. Jeff Hennick
+  99/10/07 fixed order of args.  ejt
+  99/05/19 reversed range and direction to match CMS.  ejt
+  98/07/30 use StageError(13,... in stageExit.  ejt
+  98/07/29 sortExit was not prefixing generated method with the pipe name. ejt
+  98/07/23 split into sort and qsort classes
+  98/07/20 exploit IRange.  ejt
+  98/07/17 fix alg. problems when long strings of the same key. EJT
+*/
+
+package org.netrexx.njpipes.stages
+
+options binary nostrictcase nostrictargs nostrictsignal
+
+import org.netrexx.njpipes.pipes.
+
+class sort extends stage public uses IRange
+ --Defaults
+ args = Rexx -- arg string still to be processed
+ ad = 'A'  -- sort ascending
+ single = '' -- do not sort if only one
+ tolerant = '' -- use strict Rexx comparisons
+ range = '1-*' -- sort full record
+ rangearray = IRange[]
+ type = Rexx 'Rexx'  -- type of objects to sort
+ number = 10000 -- max number of objects
+ stgname = Rexx -- stage name
+ pname = Rexx -- pipe name
+
+method run()
+   Emsg(11,'Error - Should be overridden via a stageExit')
+
+/*
+ * This method is an exit called by the compiler.  With it you can change
+ * the unprocessed pipe definition, the definition of the current stage,
+ * and you can pass generated code back to the compiler.  To use it override
+ * it.  See stages\append, stages\prefix and stages\specs for examples of its
+ * use.
+ *
+ * stageExit is ONLY called for stages in the stage directory
+ *
+ * pInfo     = name of pipe,
+ * pInfo[1]  = stage number in pipe
+ * pInfo[2]  = stage label, null if no label
+ * pInfo[3]  = stage name
+ * pInfo[4]  = stage arguments
+ * pInfo[5]  = rest of pipe
+ * pInfo[6]  = sep
+ * pInfo[7]  = end
+ * pInfo[8]  = not modifier active
+ * pInfo[9]  = stage is a driver (no input streams)
+ * pInfo[10] = stage is a sink (no output streams)
+ * code      = ''
+ * code[0]   = 0     code generated as an inner class
+ *
+ * When compilerExit returns with true, the compiler expects:
+ *
+ * pInfo[2]  = stage label
+ * pInfo[3]  = name of stage
+ * pInfo[4]  = stage arguments
+ * pInfo[5]  = rest of the pipe
+ * code[0]   = number of lines generated for inner class
+ * code[n]   = line n
+ *
+ */
+
+method stageExit(pInfo=Rexx,o=Rexx) returns boolean signals StageError
+
+ parms = rexx ''
+ pname = pInfo
+ stgname   = pInfo[3]         -- stage name
+ args  = pInfo[4]
+
+ procargs()
+
+ nr = rangearray[0].number()
+
+ n = o[0]
+ select
+   when nr=0 then
+      signal StageError(13,'Error - 'stgname' - expected a range, found :'args)
+   when nr=-1 then do
+      sr = 'sort'type'_'pInfo[1]
+      o[n+1] ='class 'pInfo'_'sr' extends sort'type' uses IRange private'
+      n = n+2
+   end
+   when type='Rexx' then do
+      sr = pInfo'_sort'type'_'pInfo[1]
+      how = rangearray[0].BuildIRangeExit('ir','d')
+      o[n+1] ='class 'pInfo'_'sr' extends sort'type' uses IRange private'
+      if how.left(3)='ir[' then
+         o[n+2] ='   ir = IRange[]'
+      o[n+4] ='method key(d=rexx) returns rexx'
+      o[n+5] = '  return 'how
+      if how.left(3)='ir[' then do
+         o[n+7] ='method setup(term=rexx) returns int'
+         o[n+8] ='  ir = GetIRanges(term)'
+         o[n+9] ='  return 0'
+      end
+      n = n+10
+   end
+   otherwise
+      say "Warning - sort"type" may require modifications to sort's stageExit method"
+ end
+
+ if parms='' then                                  -- we are modifying the method call
+   args  = '10000' ad args tolerant                -- used to create the sort stage
+ else do
+   select
+      when parms.words()=1 & parms.datatype('W') then
+         args = parms' 'args tolerant
+      when parms.words()=1 & \parms.datatype('W') then
+         args = '10000 'args tolerant
+      when parms.words()=2 & \parms.word(1).datatype('W') & parms.word(2).datatype('W') then
+         args = parms.word(2)' 'args tolerant
+      otherwise
+         signal StageError(13,'Error - 'pInfo' - at 'stgname' "'parms'" incorrect.  Use: {({class} {size})} {A|D} {target}')
+   end
+ end
+
+ o[0] = n
+
+ pInfo[3] = pInfo'_'sr            -- use this stage call
+ pInfo[4] = args single   -- use these args instead
+return 1
+
+method procargs() signals StageError
+ procparens()
+ procad()
+ rangearray = GetIRanges(args)
+ if rangearray[0].number() = 0 then do
+   args = '1-*' args
+   rangearray = GetIRanges(args)
+ end
+ else args = rangearray[0].residue()
+
+ procad()
+ procsingle()
+ proctolerant()
+
+method procad()
+ argsorg = args
+ parse args fw rest
+ fw = fw.upper
+
+ select
+   when 'ASCENDING'.abbrev(fw,1) then do
+     ad = 'A'
+     args = rest
+   end
+   when 'DESCENDING'.abbrev(fw,1) then do
+     ad = 'D'
+     args = rest
+   end
+   otherwise args = argsorg
+ end
+
+method procparens() signals StageError
+ parse args fc +1
+
+ if fc = '(' & args.pos(')')>1 then do
+   parse args '(' parms ')' args
+   if \parms.word(1).datatype('W') then do
+     type = parms.word(1)
+     parms = parms.subword(2)
+   end
+   if parms \= '' then
+     if parms.word(1).datatype('W') then do
+     number = parms.word(1)
+     parms = parms.subword(2)
+   end
+   if parms \= '' then
+     signal StageError(13,'Error - 'pname' - at 'stgname' "'parms'" incorrect.  Use: {({class} {size})} {A|D} {target}')
+ end
+
+method procsingle()
+ parse args fw rest
+ if fw = 'SINGLEOK' then do
+   single = 'SINGLEOK'
+   args = rest
+ end
+ if type \= 'REXX' then
+   single = ''
+
+method proctolerant()
+ parse args fw rest
+ if fw = 'TOLERANT' then do
+   tolerant = 'TOLERANT'
+   args = rest
+ end
+ if fw = 'STRICT' then do
+   args = rest
+ end
+
+method givehelp() static
+ return -
+ "/** sort -- Order Records\n" -
+ "  NetRexx\n" -
+ "\n" -
+ " >>--SORT--+-----------------------------+--+------------+-->\n" -
+ "           |   +-REXX-----+  +-10000-+   |  +-inputRange-+\n" -
+ "           +-(-+----------+--+-------+-)-+\n" -
+ "               +-class-(2)+  +-size--+\n" -
+ "\n" -
+ "     +-Ascending-(1)-+                   +-STRICT---+\n" -
+ "  >--+---------------+--+-------------+--+----------+--><\n" -
+ "     +-Descending-(1)+  +-SINGLEOK-(3)+  +-TOLERANT-+\n" -
+ "\n" -
+ "    Note:\n" -
+ "     (1) May come before range, for backwards compatability.\n" -
+ "     (2) Requires that you implement another sortClass with a name begining with 'sort'\n" -
+ "     (3) Suppresses error message if only one record to sort for Rexx objects.\n" -
+ "\n" -
+ "\n" -
+ "  CMS\n" -
+ "                       +-NOPAD----+\n" -
+ "  >>--SORT-+--------+--+----------+--+---------+--->\n" -
+ "           +-COUNT--+  +-PAD-xorc-+  +-ANYcase-+\n" -
+ "           +-UNIQue-+\n" -
+ "\n" -
+ "     +-Ascending------------------------------------+\n" -
+ "  >--+----------------------------------------------+---><\n" -
+ "     +-Descending-----------------------------------+\n" -
+ "     | +-----------------------------------------+  |\n" -
+ "     | |            +-Ascending--+               |  |\n" -
+ "     +-v-inputRange-+------------+--+----------+-+--+\n" -
+ "                    +-Descending-+  +-NOPAD----+\n" -
+ "                                    +-PAD-xorc-+\n" -
+ "\n" -
+ "This sort routine is very basic.  It uses sortRexx class, which implements\n" -
+ "the sortClass interface.  To sort objects of classes other than Rexx requires\n" -
+ "that you implement another sortClass with a name begining with 'sort'.\n" -
+ "\n" -
+ "I implemented this class using an Java array for the objects to be sorted as\n" -
+ "opposed to a Rexx stem.  Using an array is about 50% faster.  I choose a quick/\n" -
+ "Bose Norman sort since I had the code, in Rexx, for it from a time before I\n" -
+ "had pipes on CMS! EJT\n" -
+ "\n" -
+ "*/\n"

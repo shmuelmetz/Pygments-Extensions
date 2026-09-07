@@ -10,7 +10,7 @@ license) prepended as its own comment block.
 
 ## What's committed here, and why
 
-### `from-netrexx-project/` (32 files)
+### `from-netrexx-project/` (42 files)
 
 Pulled directly from the official NetRexx reference implementation
 ([sourceforge.net/p/netrexx/code](https://sourceforge.net/p/netrexx/code/ci/master/tree/),
@@ -52,6 +52,23 @@ class that pass found:
   string handling, recursion, sorting algorithms) from two very
   different code populations -- the compiler's own production runtime
   and small task-focused example programs.
+
+**2026-09-07 addition (10 files)**: Jeff Hennick (RexxLA) pointed out
+the project's Pipelines subsystem -- a translator plus roughly 230
+stage implementations, each using different strategies to meet its
+own requirements -- as another substantial body of real-world NetRexx
+untouched by the original pass. Tested all 253 files under
+`src/org/netrexx/njpipes/` (the translator and every stage) plus the
+standalone `.nrx` test files in `examples/pipes/` and `test/` (258
+total): zero `Error` tokens, no new defects found. Kept a
+representative slice here -- the translator (`pipes/pipe.nrx`,
+`pipes/pipe2nrx.nrx`), seven stages spanning the size range from
+`stages/console.nrx` (136 bytes) up to `stages/spec.nrx` (~50KB) --
+`console.nrx`, `sort.nrx`, `count.nrx`, `locate.nrx`, `strip.nrx`,
+`lookup.nrx`, `spec.nrx` -- and `examples/pipes/pipeTests.nrx`. (The `.njp` files alongside those test
+files are not NetRexx source -- they're the separate, REXX-flavored
+pipe-specification scripts the stages execute -- so they're out of
+scope for this lexer and not included here.)
 
 **Excluded, not a lexer defect**: `tools/epm/EPMKWDS.NRX`, found
 during the same scan, is not NetRexx source at all -- it's an IBM EPM
