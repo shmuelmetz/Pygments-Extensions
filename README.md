@@ -28,9 +28,19 @@ No curation step existed to have left `pli.php` out — whatever GeSHi shipped, 
 
 Open Object Rexx lexer for syntax highlighting of ooRexx source. Built as a fork/extension of Pygments' existing classic-Rexx lexer (`pygments.lexers.scripting.RexxLexer`), which covers a useful subset of shared syntax already.
 
+## NetRexx
+
+Lexer for NetRexx itself (Mike Cowlishaw's compiles-to-Java/JVM-bytecode Rexx dialect) — see `pygments_extensions/lexers/netrexx.py`'s module docstring for sourcing and the two real bugs its validation pass found and fixed, and the outreach section below for its real-world validation history (912 files from the reference implementation, 32 kept as a regression corpus).
+
+## NetRexx Pipelines
+
+Separate lexer, `NetRexxPipelinesLexer`, for the Pipelines specification language (`.njp` files) that ships alongside NetRexx — a genuinely different language from NetRexx proper (the same relationship HTML has to CSS), not a NetRexx dialect, so it isn't folded into `NetRexxLexer`. Prompted by a rexxla-members list thread (Jeff Hennick asking whether Pipelines syntax could be covered; J. Leslie Turriff independently drawing the same HTML/CSS analogy). Sourced from the project's own `NetRexx 5.10 Pipelines Guide and Reference` and the maintainer's `stages.db` (the real stage-name/alias list), not inferred from samples alone; smoke-tested clean across all 232 real `.njp` files in the reference implementation. First-draft status — see `samples/netrexx-pipelines/real-world/README.md` for what's covered and what isn't yet (per-stage option grammar, mainly).
+
 ### Future direction
 
-Other lexers have been discussed for this project — including ISPF panels/messages/skeletons/DTL and other mainframe-adjacent languages (HLASM, NetRexx, Regina Rexx) — and some scaffolding for them (entry points, an earlier draft README) already exists in this repo. They are not being worked on yet; PL/I and ooRexx are the current priority. This section will grow as that work starts.
+Other lexers have been discussed for this project — including ISPF panels/messages/skeletons/DTL and other mainframe-adjacent languages (HLASM, Regina Rexx) — and some scaffolding for them (entry points, an earlier draft README) already exists in this repo. They are not being worked on yet; PL/I and ooRexx remain the current priority, with NetRexx and NetRexx Pipelines now underway alongside them. This section will grow as that work starts.
+
+**CMS Pipelines** is a planned sibling to `NetRexxPipelinesLexer` — John Hartmann's original pipeline language for z/VM CMS (njpipes is a reimplementation of it), so the stage / `|` / label / stage-option structure and the "model the structure, not every stage's argument grammar" scope call carry straight over. To be sourced from the *z/VM CMS Pipelines User's Guide and Reference* (the free IBM PDF, merged SC24-6169/SC24-6170), per this project's go-to-the-reference rule. One wrinkle over `.njp`: CMS Pipelines is usually embedded in REXX as a quoted `'PIPE …'` command string rather than a standalone file, so part of its value is language-in-a-string highlighting that doesn't auto-trigger (portrait-format pipeline files and REXX filter stages do exist as standalone artifacts). Sequenced after the NetRexx / NetRexx Pipelines upstream PR to keep the submission queue orderly.
 
 ## Pre-submission checklist against Pygments' own requirements
 

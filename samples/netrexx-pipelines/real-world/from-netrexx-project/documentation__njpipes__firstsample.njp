@@ -1,0 +1,11 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/documentation/njpipes/firstsample.njp
+Project: NetRexx Pipelines (part of the official RexxLA/IBM NetRexx
+         reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx-pipelines/real-world/README.md.
+----------------------------------------------------------------------------*/
+pipe (hello) literal hello world | console

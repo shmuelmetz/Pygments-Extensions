@@ -1,0 +1,35 @@
+/*----------------------------------------------------------------------------
+Real-world sample gathered for lexer validation (not written for this project).
+Source: https://sourceforge.net/p/netrexx/code/ci/master/tree/examples/pipes/addpipetest3.njp
+Project: NetRexx Pipelines (part of the official RexxLA/IBM NetRexx
+         reference implementation)
+License: ICU License (ICU 1.8.1 and later) -- see the source repo's LICENSE
+         file for full terms. Retained here under those terms as part of
+         pygments-extensions' own real-world lexer validation corpus; see
+         samples/netrexx-pipelines/real-world/README.md.
+----------------------------------------------------------------------------*/
+-- o-n steal output stream|
+
+pipe (addt3 debug 0 ) gen 10 | addpipetest3 | console
+
+import org.netrexx.njpipes.pipes.
+
+class addpipetest3 extends stage
+
+method run() public
+
+   say 'o-n : a 1, a 2 .. a 10'
+   do
+      addpipe (addpt3 debug 0 ) *out0: | specs /a/ 1 1-* nextw | console | *out0:
+
+      loop forever
+         line = peekto()
+         output(line)
+         readto()
+      end
+
+   catch StageError
+      rc = rc()
+   end
+
+exit(rc*(rc<>12))
