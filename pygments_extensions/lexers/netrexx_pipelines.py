@@ -62,10 +62,21 @@ Confirmed from the Guide:
 * Column/record ranges (``2-*``, ``1-*``) use ``*`` as "to end" --
   confirmed in ``spec``/``specs`` usage throughout the sample corpus.
 
-Not yet modeled, left as plain text pending closer study: the escape
-sequences inside delimited literals (``\\c``, ``\\b``, ``\\p``, ``\\s``
-seen in ``compare``'s message-format strings in ``all_tests1.njp`` --
-column/record/actual/expected substitutions, not documented in the
+The ``compare``-stage substitution escapes inside delimited literals
+are modeled: per the Pipelines Guide and Reference p.50 (confirmed by
+Jeff Hennick on the rexxla-members thread), a DString may carry
+``\\C`` (record number), ``\\B`` (column number), ``\\P`` (primary
+stream record), ``\\S`` (secondary stream record), ``\\L`` (shorter
+stream number, -1 if equal) and ``\\M`` (longer stream number), or
+their lowercase forms. DStrings carry them in DString-escaped form --
+a doubled backslash -- which is how they appear in ``all_tests1.njp``.
+This lexer does not track which stage precedes a literal, so it
+highlights the family as ``String.Escape`` in *any* DString, not only
+``compare``'s; a stray ``\\c`` in some other stage's argument is a
+possible but cosmetic over-highlight.
+
+Not modeled: the DString's own escapes (``\\n`` for newline etc. --
+also in ``all_tests1.njp`` but the DString escape set is not in the
 portion of the Guide read so far) and the full stage-option grammar
 per stage (each stage has its own argument shape; this lexer tokenizes
 stage names and pipeline structure, not each stage's internal option
@@ -79,6 +90,8 @@ had, and not yet reviewed by anyone from the Pipelines project. Seven
 representative files are kept as a regression corpus in
 ``samples/netrexx-pipelines/real-world/from-netrexx-project/``.
 """
+
+import re
 
 from pygments.lexer import RegexLexer, words
 from pygments.token import (
@@ -134,6 +147,34 @@ _STAGE_ALIASES = (
 
 _STAGE_WORDS = sorted(set(_STAGE_NAMES) | set(_STAGE_ALIASES), key=len, reverse=True)
 
+# compare-stage substitution escapes (Pipelines Guide & Reference p.50):
+# \C \B \P \S \L \M and lowercase. In a DString they are carried
+# DString-escaped -- a doubled backslash -- so match that form first,
+# then the bare form defensively.
+_DSTRING_ESC = re.compile(r"\\\\[CBPSLMcbpslm]|\\[CBPSLMcbpslm]")
+
+
+def _dstring(lexer, match):
+    """Sub-tokenize a delimiter-quoted literal, breaking out the
+    compare-stage substitution escapes. The whole literal is matched
+    by one regex (with the closing-delimiter backreference, so an
+    unclosed delimiter never reaches here); this callback just splits
+    the already-bounded text."""
+    text = match.group()
+    start = match.start()
+    delim = text[0]
+    yield start, String, delim
+    body = text[1:-1]
+    last = 0
+    for m in _DSTRING_ESC.finditer(body):
+        if m.start() > last:
+            yield start + 1 + last, String, body[last : m.start()]
+        yield start + 1 + m.start(), String.Escape, m.group()
+        last = m.end()
+    if last < len(body):
+        yield start + 1 + last, String, body[last:]
+    yield match.end() - 1, String, delim
+
 
 class NetRexxPipelinesLexer(RegexLexer):
     """
@@ -180,7 +221,7 @@ class NetRexxPipelinesLexer(RegexLexer):
             # ``/`` reaching this point cannot start a comment; an
             # unclosed delimiter simply doesn't match (needs the closing
             # ``\1``) and falls through to Text.
-            (r"([^\sA-Za-z0-9|()*-])(?:(?!\1).)*\1", String),
+            (r"([^\sA-Za-z0-9|()*-])(?:(?!\1).)*\1", _dstring),
             (r"[A-Za-z_$][A-Za-z0-9_$]*", Name),
             (r".", Text),
         ],

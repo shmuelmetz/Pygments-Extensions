@@ -36,10 +36,13 @@ tokens across all 232, not just these seven):
 * `examples__pipes__all_tests1.njp`, `examples__pipes__aggrc_tests1.njp`,
   `examples__pipes__alter_tests02.njp` -- labels (`o:`, `c1:`) and the
   `?` fan-in/fan-out connector, delimiter-quoted literals with a
-  variety of delimiter characters (`/a/`, `~...~`), and the escape
-  sequences inside `compare`'s message-format strings
-  (`\c`/`\b`/`\p`/`\s`) that the lexer's docstring flags as not yet
-  specially modeled.
+  variety of delimiter characters (`/a/`, `~...~`), and the
+  `compare`-stage substitution escapes inside DStrings
+  (`\c`/`\b`/`\p`/`\s`, and their doubled-backslash DString-escaped
+  form) -- now highlighted as `String.Escape` per the Pipelines Guide
+  and Reference p.50 (Jeff Hennick confirmed the list on the
+  rexxla-members thread). The DString's own escapes (`\n` etc.) are
+  still left plain pending that spec.
 * `examples__pipes__addpipetest3.njp` -- `addpipe` (as opposed to a
   top-level `pipe`), and a file that mixes an `.njp` pipe specification
   with actual NetRexx class code in the same file (the Pipelines Guide

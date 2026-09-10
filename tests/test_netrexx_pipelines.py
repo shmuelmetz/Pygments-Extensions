@@ -66,11 +66,30 @@ def test_stage_abbreviation_still_reads_as_stage(lexer):
 
 def test_delimiter_quoted_literal(lexer):
     # The option's own first character is its closing delimiter, same
-    # free-delimiter convention as classic Rexx PARSE.
+    # free-delimiter convention as classic Rexx PARSE. The literal is
+    # sub-tokenized (see test_compare_escape_family), so check the
+    # delimiter + body pieces rather than one combined token.
     toks = _tokens(lexer, "pipe (p) literal x | locate /abc/ | console\n")
-    assert (String, "/abc/") in toks
+    assert (String, "/") in toks and (String, "abc") in toks
     toks = _tokens(lexer, "pipe (p) literal x | locate ~abc~ | console\n")
-    assert (String, "~abc~") in toks
+    assert (String, "~") in toks and (String, "abc") in toks
+
+
+def test_compare_escape_family(lexer):
+    # Pipelines Guide & Reference p.50: a DString may carry the
+    # compare-stage substitutions \C \B \P \S \L \M (and lowercase),
+    # DString-escaped (doubled backslash) as they appear in
+    # all_tests1.njp. Bare single-backslash form is also accepted.
+    toks = _tokens(
+        lexer, r"pipe (p) literal x | compare ~rec \\c col \\b~ | console" + "\n"
+    )
+    assert (String.Escape, r"\\c") in toks
+    assert (String.Escape, r"\\b") in toks
+    toks = _tokens(lexer, r"pipe (p) literal x | compare /\p vs \s/ | console" + "\n")
+    assert (String.Escape, r"\p") in toks
+    # a non-family backslash sequence stays plain String
+    toks = _tokens(lexer, r"pipe (p) literal x | compare /a\nb/ | console" + "\n")
+    assert not any(t is String.Escape for t, _ in toks)
 
 
 def test_column_range_star(lexer):
