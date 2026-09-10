@@ -46,8 +46,11 @@ on the directive-bearing library files and correctly drops toward 0 on
 the near-classic-Rexx scripts (`eorexx__examples__mean.rex`, a
 five-line `.SysCArgs` mean calculator with no `::` directive).
 Fourteen of the fifteen are Apache-2.0; `eorexx__examples__mean.rex`
-is CPL-1.0. Both licenses permit this redistribution; each file keeps
-any original header below this project's added provenance block.
+is CPL-1.0. Both licenses permit this redistribution. Eight of the
+fifteen open with a `#!/usr/bin/env rexx` line, which ooRexx only
+accepts as the literal first line of a program -- so on those files
+this project's provenance block sits on line 2, immediately after the
+shebang, rather than at the very top.
 
 ### `from-rexxla-classic-rexx/` (7 files)
 
