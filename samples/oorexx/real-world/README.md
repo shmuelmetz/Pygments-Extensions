@@ -24,6 +24,31 @@ License v1.0 (CPL-1.0), which permits this redistribution; each file's
 own CPL/copyright header (already present in the original source) is
 preserved below this project's added provenance header.
 
+### `from-sparrac/` (15 files)
+
+A curated slice of Salvador Parra Camacho's personal ooRexx libraries,
+published to GitHub and announced on the rexxla-members mailing list in
+September 2026: [oorexx-gnuplot](https://github.com/sparrac/oorexx-gnuplot),
+[oorexx-dotenv](https://github.com/sparrac/oorexx-dotenv),
+[oorexx-math-sequences](https://github.com/sparrac/oorexx-math-sequences),
+[oorexx-mpd](https://github.com/sparrac/oorexx-mpd),
+[oorexx-ranges](https://github.com/sparrac/oorexx-ranges),
+[oorexx-tinylog](https://github.com/sparrac/oorexx-tinylog), and
+[eorexx](https://github.com/sparrac/eorexx). This is idiomatic
+present-day hobbyist ooRexx -- doc-comment blocks (`/** @method */`),
+`::class`/`::method`/`::constant`/`::routine` directives, compound
+assignment (`+=`, `*=`), `self[n]` bracket indexing, `.Array~new`,
+`address gnuplot`/`address system` with redirection, `.OLEObject` COM,
+and `.SysCArgs` -- a different style pool from the official
+`from-oorexx-project/` sample programs and class libraries. `OORexxLexer`
+tokenizes all 15 with zero Error tokens; `analyse_text()` scores 1.00
+on the directive-bearing library files and correctly drops toward 0 on
+the near-classic-Rexx scripts (`eorexx__examples__mean.rex`, a
+five-line `.SysCArgs` mean calculator with no `::` directive).
+Fourteen of the fifteen are Apache-2.0; `eorexx__examples__mean.rex`
+is CPL-1.0. Both licenses permit this redistribution; each file keeps
+any original header below this project's added provenance block.
+
 ### `from-rexxla-classic-rexx/` (7 files)
 
 Pulled from [RexxLA/rexx-repository](
@@ -72,6 +97,7 @@ Polymorphic copy, Respond to an unknown method call, and Singleton
 ```
 # from-oorexx-project/: raw.githubusercontent.com/ooRexx/ooRexx/master/<path>
 # from-rexxla-classic-rexx/: raw.githubusercontent.com/RexxLA/rexx-repository/master/<path>
+# from-sparrac/: raw.githubusercontent.com/sparrac/<repo>/master/<path>
 ```
 
 The original relative path within its source repository is recorded

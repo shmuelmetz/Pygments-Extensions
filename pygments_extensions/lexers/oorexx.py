@@ -62,6 +62,17 @@ ships *inside* the ooRexx distribution but contains no OO syntax) score
 since such a file's tokenization is identical either way; there is
 nothing for this lexer to add. The heuristic itself needed no changes.
 
+Second real-world pass, 2026-09-10: 52 ``.rex`` files from Salvador
+Parra Camacho's personal ooRexx libraries (oorexx-gnuplot, -dotenv,
+-math-sequences, -mpd, -ranges, -tinylog, and eorexx -- announced on
+rexxla-members, September 2026) -- present-day idiomatic hobbyist code,
+a distinct style pool from the interpreter project's own samples.
+Zero Error tokens across all 52 with no lexer changes needed;
+``analyse_text`` scored 1.0 on the directive-bearing library files and
+correctly toward 0 on the handful of near-classic scripts (e.g.
+eorexx's five-line ``.SysCArgs`` mean calculator). 15 kept in
+samples/oorexx/real-world/from-sparrac/ as regression coverage.
+
 What real-world testing DID find and fix (see the lexer body below for
 each, and tests/test_oorexx.py for regression coverage): the ``--``
 line-comment form (ooRexx Reference 5.0.0 Sec 1.10.3) was not recognized
