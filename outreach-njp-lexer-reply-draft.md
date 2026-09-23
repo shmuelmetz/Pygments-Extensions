@@ -1,15 +1,3 @@
-# Draft reply to Jeff Hennick (2nd message)
-
-Status: draft for review — not sent. Jeff's reply: positive ("looking
-very good"), but he's **out of town for a few weeks** and can't run
-the code yet. He answered Q4 fully — the `\C`/`\B`/`\P`/`\S`/`\L`/`\M`
-family is on **p.50 of the Pipelines Guide and Reference**, the
-`compare`-stage substitution escapes. He also mentioned an **HTML
-stage-documentation file** (used to generate the paper version, not in
-the distribution) he'd send when home.
-
----
-
 **Subject:** Re: [rexxla-members] New Pygments lexers for ooRexx, PL/I, and NetRexx
 
 Jeff,
