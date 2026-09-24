@@ -106,7 +106,7 @@ from pygments.token import (
 )
 
 # Real NetRexx-Pipelines stage names and their documented abbreviations,
-# from stages.db (stages.nr=1, i.e. stages implemented for NetRexx
+# from stages.db (stages.nr=1, i.e., stages implemented for NetRexx
 # Pipelines specifically, not CMS-only entries) and its xalias table --
 # the maintainer's own reference, not a hand-typed guess. "--" and the
 # device-driver symbols (<, >, >>) are stage names too but are handled
@@ -211,7 +211,7 @@ class NetRexxPipelinesLexer(RegexLexer):
             (r"-", Operator),
             # A delimiter-quoted literal: the option's first character
             # is reused as its own closing delimiter (the same
-            # free-delimiter convention as classic Rexx PARSE), e.g.
+            # free-delimiter convention as classic Rexx PARSE), e.g.,
             # /a/, ~text~. Any non-alphanumeric, non-whitespace
             # character except the structural ones (| ( ) and the range
             # chars * -) can be the delimiter; this matches the first

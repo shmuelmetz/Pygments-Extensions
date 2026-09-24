@@ -18,7 +18,7 @@ What's new here, specific to the object-oriented layer ooRexx adds:
   ``::PACKAGE`` directive lines.
 * Message-send syntax: ``~`` and ``~~`` (cascading message send), and
   ``[`` / ``]`` -- bracket notation is itself sugar for a ``[]`` message
-  send in ooRexx (e.g. ``stem[foo] = bar``), not just array-indexing
+  send in ooRexx (e.g., ``stem[foo] = bar``), not just array-indexing
   punctuation, distinct from the classic Rexx compound-variable
   ``stem.tail`` access which is plain inherited syntax with no
   message-send semantics. See AI-Priming/ooRexx/RULES.md, "Indirect/
@@ -45,7 +45,7 @@ body -- has now been checked against real-world source, not just the
 hand-written samples in samples/oorexx/ and tests/test_oorexx.py. The
 corpus: ~30 files from the official ooRexx/ooRexx interpreter repo's own
 samples/, extensions/, and interpreter/RexxClasses/ directories (real
-OO-heavy library code, e.g. the JSON/YAML class libraries and the
+OO-heavy library code, e.g., the JSON/YAML class libraries and the
 built-in CoreClasses.orx); 7 genuinely classic-Rexx-only files (no OO
 markers at all) from RexxLA/rexx-repository's Classic_Rexx/ tree, used
 as negative cases; and 10 community-contributed snippets from Rosetta
@@ -56,7 +56,7 @@ had *any* OO marker in it -- see samples/oorexx/real-world/ for the
 retained portion of this corpus and its provenance. One real gap the
 corpus did surface, now fixed below rather than in the heuristic itself:
 plain classic-Rexx-style ooRexx files that happen not to use ``::`` or
-``~`` at all (e.g. samples/api/classic/unix/rexxapi1/apitest1.rex, which
+``~`` at all (e.g., samples/api/classic/unix/rexxapi1/apitest1.rex, which
 ships *inside* the ooRexx distribution but contains no OO syntax) score
 0.0 here and fall through to classic RexxLexer -- which is correct,
 since such a file's tokenization is identical either way; there is
@@ -69,7 +69,7 @@ rexxla-members, September 2026) -- present-day idiomatic hobbyist code,
 a distinct style pool from the interpreter project's own samples.
 Zero Error tokens across all 52 with no lexer changes needed;
 ``analyse_text`` scored 1.0 on the directive-bearing library files and
-correctly toward 0 on the handful of near-classic scripts (e.g.
+correctly toward 0 on the handful of near-classic scripts (e.g.,
 eorexx's five-line ``.SysCArgs`` mean calculator). 15 kept in
 samples/oorexx/real-world/from-sparrac/ as regression coverage.
 
@@ -85,7 +85,7 @@ itself as upwardly compatible with classic Rexx symbol rules) was
 under-recognized, rejecting real symbols like the ``?`` conditional-
 selection message name used in the project's own samples/complex.cls;
 and the ``~name:ClassSymbol`` scoped/explicit method-search-order form
-(ooRexx Reference 5.0.0 Sec 4.2.7, e.g. ``self~init:super``) wasn't
+(ooRexx Reference 5.0.0 Sec 4.2.7, e.g., ``self~init:super``) wasn't
 recognized at all, despite being used repeatedly in the official
 samples/pipe.cls. ``::CLASS``/``::METHOD``/``::ATTRIBUTE`` directive
 modifier keywords (PUBLIC, PRIVATE, PACKAGE, PROTECTED, UNPROTECTED,
@@ -168,14 +168,14 @@ __all__ = ["OORexxLexer"]
 # generic "." operator for compound-variable tails) rather than folded
 # into a single "symbol" token, an existing, deliberate simplification
 # unrelated to this fix. Confirmed missing for the rest of the set
-# (@ # $ ! ?) by real-world testing: e.g. the "?" conditional-selection
+# (@ # $ ! ?) by real-world testing: e.g., the "?" conditional-selection
 # message name in the official project's own samples/complex.cls
 # (`sign~?(-1, 1)`), and "$"-prefixed variable names in real classic
 # Rexx source from the same era this symbol rule originates in.
 _SYMBOL_START = r"[a-z_@#$!?]"
 _SYMBOL_CHAR = r"[\w@#$!?]"
 _SYMBOL = _SYMBOL_START + _SYMBOL_CHAR + r"*"
-# A label may itself be a compound symbol (stem.tail, e.g. "TRAP.SIGL:"
+# A label may itself be a compound symbol (stem.tail, e.g., "TRAP.SIGL:"
 # or "UTF.8:") -- a common convention for grouping related SIGNAL/CALL
 # targets under a shared prefix. _SYMBOL alone stops at the first ".",
 # so without this, "TRAP.SIGL:" tokenized as bare-symbol "TRAP" (Text,
@@ -184,7 +184,7 @@ _SYMBOL = _SYMBOL_START + _SYMBOL_CHAR + r"*"
 # ":" that no rule expects, producing an Error token on the colon.
 # Confirmed via real-world testing (D:\utility\rxwhois.cmd, a genuine
 # classic-Rexx script using exactly this labeling convention).
-# A compound symbol's tail piece may also be a bare number (e.g.
+# A compound symbol's tail piece may also be a bare number (e.g.,
 # "UTF.8:", "stem.1") -- _SYMBOL alone can't match that since
 # _SYMBOL_START excludes digits, confirmed by the same real-world test
 # file above (D:\utility\rxwhois.cmd's "UTF.8:" label).
@@ -208,7 +208,7 @@ class OORexxLexer(RegexLexer):
 
     tokens = {
         "root": [
-            # A leading "#!" line (a Unix shebang, e.g.
+            # A leading "#!" line (a Unix shebang, e.g.,
             # "#!/usr/bin/env rexx") is standard content in real ooRexx
             # scripts -- the official project's own samples/ ship it in
             # nearly every Unix sample, and the ooRexx SourceForge
@@ -287,7 +287,7 @@ class OORexxLexer(RegexLexer):
             # rule so the leading "." doesn't get split off on its own
             # as a bare Operator token.
             (r"\." + _SYMBOL, Name.Variable.Global),
-            # Scoped/explicit message send: obj~method:ClassSymbol, e.g.
+            # Scoped/explicit message send: obj~method:ClassSymbol, e.g.,
             # self~init:super. Confirmed in the ooRexx 5.0.0 Reference,
             # Sec 4.2.7 "Changing the Search Order for Methods": "You
             # can change the usual search order for methods by
@@ -347,7 +347,7 @@ class OORexxLexer(RegexLexer):
             # Same-line whitespace only ([ \t]*, not \s*) -- a bare \s*
             # here would cross newlines and can swallow the first colon
             # of a following-line "::" directive as part of a label
-            # match (e.g. "Point\n::METHOD" reads as label "Point" then
+            # match (e.g., "Point\n::METHOD" reads as label "Point" then
             # a stray second colon), starving the directive rule above
             # of a chance to match. Confirmed by test failure before
             # this fix.
@@ -414,7 +414,7 @@ class OORexxLexer(RegexLexer):
             # ::OPTIONS' CONDITION sub-keyword. See _CONDITIONS above.
             (words(_CONDITIONS, prefix=r"\b", suffix=r"\b"), Keyword.Type),
             # ::CLASS / ::METHOD / ::ATTRIBUTE directive modifier
-            # keywords -- e.g. "::method foo class public",
+            # keywords -- e.g., "::method foo class public",
             # "::class Vector subclass complex public",
             # "::class Stringlike public mixinclass object". Confirmed
             # against the ooRexx 5.0.0 Reference: the ::METHOD directive
@@ -426,7 +426,7 @@ class OORexxLexer(RegexLexer):
             # real-world testing found every one of these falling
             # through as plain Text on real ::CLASS/::METHOD lines --
             # PUBLIC and MIXINCLASS/SUBCLASS in particular are near-
-            # universal in real class hierarchies (e.g. the official
+            # universal in real class hierarchies (e.g., the official
             # project's own samples/complex.cls and samples/pipe.cls).
             (
                 r"(public|private|package|protected|unprotected|guarded|"
@@ -437,7 +437,7 @@ class OORexxLexer(RegexLexer):
         ],
         "operator": [
             # ";" is the explicit clause (statement) delimiter -- lets
-            # multiple Rexx clauses share one physical line (e.g.
+            # multiple Rexx clauses share one physical line (e.g.,
             # "self~write(counter);"). Real-world testing found this
             # missing entirely: every semicolon in every multi-clause
             # line across the whole corpus produced an Error token,
@@ -478,7 +478,7 @@ class OORexxLexer(RegexLexer):
             (r"\*", Comment.Multiline),
         ],
         # ::OPTIONS body -- a line of package-wide parser/runtime
-        # sub-keywords (see _OPTIONS_SUBKW above), e.g.
+        # sub-keywords (see _OPTIONS_SUBKW above), e.g.,
         # "::options digits 15 namespace myns". Gap and a concrete bug
         # found via cross-check against Till Winkler's independently-
         # written ooRexx lexer (RexxLA members list, 2026-09): his

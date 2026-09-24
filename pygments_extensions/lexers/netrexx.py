@@ -61,11 +61,11 @@ Also verified from the same NRL sections, now reflected below:
   EXPLICIT sign after E/e -- every one of the NRL's own examples
   (``17.3E-12``, ``3e+12``, ``0.03E+9``) has one, and footnote 21
   states "The sign in this context is part of the symbol; it is not an
-  operator" -- i.e. ``1e10`` with no sign is not this construct at all.
+  operator" -- i.e., ``1e10`` with no sign is not this construct at all.
   Modeled below with a mandatory ``[+-]``, not the optional-sign
   pattern this project's other two lexers use for their own numeric
   exponents (a real, cited difference from those, not an oversight).
-* Hexadecimal/binary numeric symbols (NRL Sec 6.6), e.g. ``2x81``,
+* Hexadecimal/binary numeric symbols (NRL Sec 6.6), e.g., ``2x81``,
   ``4b1000`` -- an *n*-Xstring / *n*-Bstring form encoding a signed
   whole number, entirely unhandled in the first pass (falling through
   as a Number followed by a stray symbol). Now matched as a single
@@ -83,7 +83,7 @@ Also verified from the same NRL sections, now reflected below:
   parameter's Java type without a separate declaration statement).
 * ``[]`` array-type/array-literal brackets (``String[]``, ``list[]``).
 * Method/property access via a plain ``.`` (period), Java-style --
-  e.g. ``v.mag()``, ``n.abs()``, ``System.out.println(...)`` (the
+  e.g., ``v.mag()``, ``n.abs()``, ``System.out.println(...)`` (the
   Tutorial's own constructor example, ``this.xc = x``, already shows
   this for property assignment) -- confirmed via netrexx.org search
   results quoting the Tutorial's internal-function-call examples
@@ -258,7 +258,7 @@ __all__ = ["NetRexxLexer"]
 # uses this (see the module docstring's "Real-world validation"
 # section for the specific files). "\w" on a `str` pattern is
 # Unicode-aware by default in Python's `re` (no extra flag needed), so
-# "[^\W\d]" (a "\w" character that is not a digit -- i.e. a Unicode
+# "[^\W\d]" (a "\w" character that is not a digit -- i.e., a Unicode
 # letter or underscore) models "letter, including extra letters"
 # for a symbol's first character, and "\w" itself (letter, digit, or
 # underscore) models "letter or digit, including extra letters/
@@ -337,7 +337,7 @@ _KEYWORDS = (
 # variable names instead, if desired." This is a real, documented
 # difference from _KEYWORDS/_DECLARATION_KEYWORDS above (which ARE
 # reserved), so it gets its own token type (Keyword.Pseudo, the same
-# category Pygments uses for e.g. Python's self/cls -- recognized by
+# category Pygments uses for e.g., Python's self/cls -- recognized by
 # convention, not grammar). CORRECTION: "this" and "super" were
 # wrongly filed under _KEYWORDS (Keyword.Reserved) in the first pass;
 # moved here, since the NRL places them in this same special-names
@@ -414,7 +414,7 @@ class NetRexxLexer(RegexLexer):
             (r'"', String, "string_double"),
             (r"'", String, "string_single"),
             # Hexadecimal/binary numeric symbol: nXstring / nBstring,
-            # e.g. "2x81", "4b1000" (NRL Sec 6.6). Must precede the
+            # e.g., "2x81", "4b1000" (NRL Sec 6.6). Must precede the
             # plain-decimal rule below, or the leading digits match as
             # an ordinary number and strand the "x81"/"b1000" tail to
             # be mis-read as a separate symbol.
@@ -472,7 +472,7 @@ class NetRexxLexer(RegexLexer):
             include("declaration_keyword"),
             include("keyword"),
             include("special_name"),
-            # Built-in method call: .methodname, e.g. string.abbrev(...).
+            # Built-in method call: .methodname, e.g., string.abbrev(...).
             # Must precede the generic operator rule below, which would
             # otherwise claim the bare "." first and leave the method
             # name to fall through as plain Text. Highlighting quality,
@@ -484,7 +484,7 @@ class NetRexxLexer(RegexLexer):
                 r"(\.)(" + "|".join(_BUILTIN_METHODS) + r")\b",
                 bygroups(Operator, Name.Builtin),
             ),
-            # Annotation: @Symbol, e.g. @Override, @Author(name="...").
+            # Annotation: @Symbol, e.g., @Override, @Author(name="...").
             # NRL Sec 4.1 (5.10-BETA): "An annotation starts with an @
             # (commercial at sign) and is passed through unchanged."
             # Only the leading @Symbol is given its own token, matching

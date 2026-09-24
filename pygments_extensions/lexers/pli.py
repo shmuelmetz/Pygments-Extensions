@@ -33,7 +33,7 @@ Updated: 2026-05-14 per IBM's own docs), not reconstructed from memory:
   NONCONNECTED, DEFINED, POSITION, INITIAL); and individually-confirmed
   pages for ALIGNED/UNALIGNED, INTERNAL/EXTERNAL, BUILTIN, CONDITION,
   GENERIC, and VALUE. This attribute list is NOT claimed exhaustive --
-  PL/I has attributes (e.g. LIKE, and RECURSIVE -- spotted used in a
+  PL/I has attributes (e.g., LIKE, and RECURSIVE -- spotted used in a
   real worked example on the "Packages" page while checking PACKAGE
   coverage, but not separately chased down to its own attribute page
   during this pass) not confirmed against a page yet -- but every name
@@ -87,7 +87,7 @@ Enterprise PL/I 6.2 Language Reference, "Bit operations"
 (https://www.ibm.com/docs/en/epfz/6.2.0?topic=expressions-bit-operations),
 Table 1 "Logical operators for bit operations": ¬ is listed as usable
 both "As prefix operator" (Yes) and "As a infix operator" (Yes) --
-prefix ¬ means logical NOT, infix ¬ (bare ¬ between two operands, e.g.
+prefix ¬ means logical NOT, infix ¬ (bare ¬ between two operands, e.g.,
 "A ¬ B") means bitwise exclusive-or (XOR), confirmed by that page's
 worked example (Table 3): for A = '010111'B, B = '111111'B, "A ¬ B"
 yields '101000'B. This is a completely separate fact from, and unrelated
@@ -103,7 +103,7 @@ same way "-" tokenizes identically whether it's unary minus or binary
 subtraction.
 
 Known overlap, not a bug: some words are both a DCL attribute and a BIF
-name in real PL/I (e.g. BINARY, FIXED, CHARACTER are attributes in a
+name in real PL/I (e.g., BINARY, FIXED, CHARACTER are attributes in a
 DECLARE and also type-conversion functions when called like BINARY(x)).
 The attribute rule is checked before the function rule below, so these
 tokenize as Keyword.Type rather than Name.Builtin in both uses --
@@ -120,7 +120,7 @@ ooRexx's ::CLASS/::METHOD did, for reasons verified rather than assumed:
 
 * IBM's own docs state outright that "preprocessor references and
   expressions are written and evaluated in the same way as described in
-  ... Expressions and references" -- i.e. there is no separate
+  ... Expressions and references" -- i.e., there is no separate
   compile-time expression grammar to parse; the existing root-state
   tokenization already handles it correctly by falling through to it.
 * Pygments' own precedent (pygments.lexers.c_cpp.CFamilyLexer, checked
@@ -131,7 +131,7 @@ ooRexx's ::CLASS/::METHOD did, for reasons verified rather than assumed:
   "wildcard-token-then-fall-through-to-shared-grammar" approach is
   actually MORE granular than that established precedent, not less.
 * IBM's own footnote on preprocessor procedures says statements inside a
-  %PROCEDURE...%END body don't need the leading % (e.g. plain "IF ...
+  %PROCEDURE...%END body don't need the leading % (e.g., plain "IF ...
   THEN ... ELSE" inside a macro procedure means preprocessor-level
   control flow, not runtime). This sounds like it needs a distinct
   lexer state -- but doesn't in practice: those bare keywords (IF, THEN,
@@ -177,15 +177,15 @@ fixed:
   Real-world testing found this missing entirely -- every "#"/"@"/"$"
   in every real identifier (extremely common in real mainframe PL/I:
   DB2/CICS program names, JCL-adjacent symbols) produced an Error
-  token, e.g. across the code_samples/PDUMP/ and CALC.pli/CHART.pli/
+  token, e.g., across the code_samples/PDUMP/ and CALC.pli/CHART.pli/
   DDINFO.pli files in the corpus below.
 * A bare ":" was rejected outside of a label. Two distinct, unrelated,
   and both entirely standard PL/I constructs use one: an array
-  dimension's explicit lower:upper bound pair (e.g. "DCL A(0:1000)
+  dimension's explicit lower:upper bound pair (e.g., "DCL A(0:1000)
   FIXED;", found repeatedly in the real-world corpus -- ordinary PL/I
   since the 1966 original, not an Enterprise extension) and a condition
   prefix, which enables/disables a condition for the statement it
-  precedes (e.g. "(NOZERODIVIDE): stmt;" -- IBM Enterprise PL/I for
+  precedes (e.g., "(NOZERODIVIDE): stmt;" -- IBM Enterprise PL/I for
   z/OS, "Prefixes" -- found in the corpus as
   "(subrg,strg,size): reform: proc(parm) options(main);", using
   standard condition-name abbreviations SUBRG/STRG/SIZE). Both produced
@@ -196,7 +196,7 @@ fixed:
   side effect, though that embedded syntax still isn't properly
   modeled.)
 * A double-quoted string wasn't recognized anywhere, including as the
-  file-spec argument to %INCLUDE (e.g. `%INCLUDE "b.pli";`). Ordinary
+  file-spec argument to %INCLUDE (e.g., `%INCLUDE "b.pli";`). Ordinary
   PL/I character-string literals are always single-quoted (see the
   vocabulary-sourcing note above) -- IBM's own %INCLUDE documentation
   wasn't reachable to confirm double-quoting is specifically documented
@@ -273,7 +273,7 @@ assumed:
   prior accidental SELECT/FROM highlighting inside EXEC SQL goes away;
   that is intended.)
 * The "exec" state ends with a catch-all so it can never emit an Error
-  token (e.g. on dynamic SQL's "?" parameter marker), consistent with
+  token (e.g., on dynamic SQL's "?" parameter marker), consistent with
   how the rest of the lexer degrades unrecognized input to Text.
 
 EXEC DLI (IMS) is the third member of this family but was not found in
@@ -403,7 +403,7 @@ class PLILexer(RegexLexer):
             # character constants (always single-quoted -- see the
             # vocabulary-sourcing note in the module docstring), but
             # real source uses them as the %INCLUDE file-spec argument
-            # (e.g. `%INCLUDE "b.pli";`) -- see the module docstring for
+            # (e.g., `%INCLUDE "b.pli";`) -- see the module docstring for
             # sourcing. Accepted generically here (not scoped to just
             # after %INCLUDE) since ordinary PL/I code never uses a bare
             # '"' at all, so there's no real ambiguity to introduce.
@@ -415,7 +415,7 @@ class PLILexer(RegexLexer):
             (r"[0-9]+\.[0-9]+", Number.Float),
             (r"[0-9]+", Number.Integer),
             # Labels: identifier immediately followed by a colon on the
-            # same line, e.g. "loop: DO ...;". Same-line whitespace only
+            # same line, e.g., "loop: DO ...;". Same-line whitespace only
             # ([ \t]*, not \s*) -- see the ooRexx lexer's own fix for
             # why a bare \s* here would be a real bug, not just style:
             # it can cross a newline and swallow a token meant for the
@@ -431,7 +431,7 @@ class PLILexer(RegexLexer):
             # position-agnostic: it matches ¬ (or ^) whenever not
             # immediately followed by =/</>, which covers BOTH real
             # grammatical positions ¬ has -- prefix (logical NOT) and
-            # infix (bitwise XOR, e.g. "A ¬ B") -- as a single generic
+            # infix (bitwise XOR, e.g., "A ¬ B") -- as a single generic
             # Operator token either way. Disambiguating which semantic
             # meaning applies is a parser-level, position-dependent
             # concern, not a lexer one.
@@ -448,14 +448,14 @@ class PLILexer(RegexLexer):
         "operator": [
             # Compound assignment operators (+=, -=, *=, /=, |=, &=,
             # ||=, **=) and the locator-qualifier operators (->, =>,
-            # pointer/handle-based member access, e.g. p->field) are
+            # pointer/handle-based member access, e.g., p->field) are
             # real IBM Enterprise PL/I additions confirmed directly
             # against current docs -- "Compound assignment statements"
             # (https://www.ibm.com/docs/en/epfz/6.2.0?topic=statements-compound-assignment)
             # and "Expressions and references"
             # (https://www.ibm.com/docs/en/epfz/6.2.0?topic=reference-expressions-references).
             # Longer sequences must be ordered before their own
-            # prefixes (e.g. "**=" before "**" before "*=" before "*"),
+            # prefixes (e.g., "**=" before "**" before "*=" before "*"),
             # since RegexLexer takes the first list entry that matches,
             # not the longest.
             (r"\*\*=|\*\*", Operator),
@@ -486,8 +486,8 @@ class PLILexer(RegexLexer):
             # part of a label. Two distinct, entirely standard PL/I
             # constructs use a bare ":" outside a label -- see the
             # module docstring for sourcing and real-world examples: an
-            # array dimension's lower:upper bound pair (e.g.
-            # "DCL A(0:1000) FIXED;") and a condition prefix (e.g.
+            # array dimension's lower:upper bound pair (e.g.,
+            # "DCL A(0:1000) FIXED;") and a condition prefix (e.g.,
             # "(NOZERODIVIDE): stmt;"). Both produced Error tokens
             # before this fix. The label rule above is listed earlier in
             # "root" and so still wins for the "identifier immediately
@@ -538,7 +538,7 @@ class PLILexer(RegexLexer):
                         # missing by real-world testing -- used in three
                         # of this project's own quickfix/ test files
                         # (DCL-ambiguity edge cases the corpus below is
-                        # specifically testing), e.g.
+                        # specifically testing), e.g.,
                         # "DCL 1 A, 2 N BIN, 2 B(N) CHAR(1) REFER(N);".
                         "refer",
                         # IBM's own documented short forms for many of
@@ -552,7 +552,7 @@ class PLILexer(RegexLexer):
                         # remainder). Confirmed missing by real-world
                         # testing: BIN, CHAR, VAR, PIC, and INIT in
                         # particular are used far more often than their
-                        # full spellings in real mainframe PL/I (e.g.
+                        # full spellings in real mainframe PL/I (e.g.,
                         # code_samples/CALC.pli, DDINFO.pli, CHART.pli,
                         # PLEAREP.pli in the corpus below all use them).
                         "auto", "bin", "buf", "char", "cplx", "conn",
@@ -602,7 +602,7 @@ class PLILexer(RegexLexer):
                         # "Example of DO with UPTHRU and DOWNTHRU") for
                         # Type 3. Confirmed missing by real-world
                         # testing: WHILE alone appears throughout the
-                        # corpus below (e.g. code_samples/FILE.pli,
+                        # corpus below (e.g., code_samples/FILE.pli,
                         # preprocessor/do.pli).
                         "while", "until", "repeat", "upthru", "downthru",
                         # GET/PUT statement data-specification and
@@ -620,7 +620,7 @@ class PLILexer(RegexLexer):
                         # option. Confirmed missing by real-world
                         # testing: SKIP and LIST in particular are
                         # near-ubiquitous ("PUT SKIP LIST(...)" appears
-                        # throughout the corpus below, e.g.
+                        # throughout the corpus below, e.g.,
                         # code_samples/FILE.pli, INSERT.pli, PLI0000.pli).
                         "list", "data", "edit", "copy", "skip", "page",
                         "line", "column", "string",
@@ -631,7 +631,7 @@ class PLILexer(RegexLexer):
                         # PTASK34.pli both use "ON ERROR IGNORE").
                         "ignore",
                         # SYSTEM: the documented implicit-system-handling
-                        # ON-unit action (e.g. "on finish system;", shown
+                        # ON-unit action (e.g., "on finish system;", shown
                         # directly in IBM's own worked example in
                         # Chapter 17, "Conditions").
                         "system",
@@ -658,7 +658,7 @@ class PLILexer(RegexLexer):
                         # PROCEDURE/ENTRY/BEGIN/PACKAGE-statement
                         # keywords, confirmed missing by real-world
                         # testing despite being present in nearly every
-                        # real procedure (e.g. "PROC OPTIONS(MAIN);" is
+                        # real procedure (e.g., "PROC OPTIONS(MAIN);" is
                         # close to universal). Confirmed directly against
                         # IBM's Enterprise PL/I Language Reference's own
                         # syntax diagrams: "OPTIONS option and attribute"
@@ -692,7 +692,7 @@ class PLILexer(RegexLexer):
             # that same reference section, not guessed). Confirmed
             # missing by real-world testing: MAIN and REORDER in
             # particular appear on the overwhelming majority of real
-            # PROCEDURE statements in the corpus below (e.g.
+            # PROCEDURE statements in the corpus below (e.g.,
             # code_samples/CALC.pli, CHART.pli, PDUMP/*.pli all use
             # "OPTIONS(MAIN)" or "OPTIONS(MAIN REORDER)"), and fell
             # through as plain Text before this fix.
@@ -714,7 +714,7 @@ class PLILexer(RegexLexer):
                 Keyword.Reserved,
             ),
             # Condition names, used in ON/SIGNAL/REVERT statements and
-            # condition prefixes (e.g. "ON ENDFILE(f) ...",
+            # condition prefixes (e.g., "ON ENDFILE(f) ...",
             # "(NOSIZE): stmt;"). This is the complete, exhaustive list
             # from Chapter 17, "Conditions", of the Enterprise PL/I
             # Language Reference, which covers exactly these 23 names in
@@ -722,7 +722,7 @@ class PLILexer(RegexLexer):
             # covered via the "attribute" state's CONDITION attribute
             # entry -- the two uses share the same word). Confirmed
             # missing by real-world testing: ENDFILE and CONVERSION in
-            # particular appear directly in the corpus below (e.g.
+            # particular appear directly in the corpus below (e.g.,
             # code_samples/FILE.pli's "ON ENDFILE", MACROS.pli's "ON
             # CONVERSION").
             (
@@ -887,7 +887,7 @@ class PLILexer(RegexLexer):
             # procedure (requires symbol-table tracking, a parser-level
             # concern, out of scope for a lexer). Also not confirmed:
             # IBM's page notes that 17 of these (the argument-less ones,
-            # e.g. SYSPARM, COMPILEDATE, COUNTER) "must not be given a
+            # e.g., SYSPARM, COMPILEDATE, COUNTER) "must not be given a
             # null argument" -- if real source ever invokes them bare,
             # with no parentheses at all, this rule's suffix=r"(\()"
             # requirement means they'd fall through to plain Text
@@ -951,7 +951,7 @@ class PLILexer(RegexLexer):
             (r"[(),.]", Punctuation),
             (r"[-+*/=<>|&:]", Operator),
             # Catch-all: never emit an Error token from inside an
-            # embedded region (e.g. dynamic SQL's "?" parameter marker),
+            # embedded region (e.g., dynamic SQL's "?" parameter marker),
             # consistent with how the rest of the lexer degrades
             # unrecognized input to Text.
             (r".", Text),
