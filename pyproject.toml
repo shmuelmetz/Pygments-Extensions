@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
-    { name = "Shmuel (Seymour J.) Metz", email = "smetz3@gmu.edu" }
+    { name = "Seymour J. Metz (H: Shmuel שמואל בן לייביש ולאה)", email = "smetz3@gmu.edu" }
 ]
 
 dependencies = [
