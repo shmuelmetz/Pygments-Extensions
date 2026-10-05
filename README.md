@@ -82,7 +82,7 @@ Contributions and corrections are welcome. If you maintain lexers for languages 
 
 ## Author
 
-Shmuel (Seymour J. Metz) (שמואל בן לייביש ולאה)
+Seymour J. Metz (H: Shmuel שמואל בן לייביש ולאה)
 [smetz3@gmu.edu](mailto:smetz3@gmu.edu)
 [mason.gmu.edu/~smetz3](https://mason.gmu.edu/~smetz3)
 GitHub: [shmuelmetz](https://github.com/shmuelmetz)
