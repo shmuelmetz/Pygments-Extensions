@@ -10,6 +10,7 @@ import pathlib
 import pytest
 from pygments.token import (
     Comment,
+    Error,
     Keyword,
     Name,
     Number,
@@ -353,3 +354,52 @@ def test_resource_body_is_raw_text(lexer):
     ]
     assert not body_region_ops
     assert not [t for t, v in toks if t is Error]
+
+
+# Hex and binary strings: the X and B suffixes (validity rules checked
+# case by case against ooRexx 5.2, 2026-10-24)
+@pytest.mark.parametrize(
+    "literal",
+    ["'0A'x", "'A'x", "'1 23'x", "'123 45'x", "'12\t34'x", "'12  34'x",
+     "'12 3456'x", "''x", '"61"X', "'0110 0001'b", "'1 0001'b",
+     "'110000 0001'b", "'0001 01100001'b", "''b", '"01100001"B'],
+)
+def test_valid_hex_and_binary_strings(lexer, literal):
+    toks = _tokens_no_whitespace(lexer, "x = " + literal)
+    assert (String.Other, literal[:-1]) in toks
+    assert (String.Affix, literal[-1]) in toks
+
+
+@pytest.mark.parametrize(
+    "literal",
+    ["'12 3'x", "' 12'x", "'12 'x", "'0G'x", "'12 345'x",
+     "'0001 01'b", "' 0001'b", "'0001 'b", "'2'b", "'0001 011000'b"],
+)
+def test_invalid_hex_and_binary_strings_are_errors(lexer, literal):
+    toks = _tokens_no_whitespace(lexer, "x = " + literal)
+    assert (Error, literal[:-1]) in toks
+    assert (String.Affix, literal[-1]) in toks
+
+
+def test_x_starting_a_symbol_is_abuttal(lexer):
+    # '61'xyz is '61' abutted to the symbol xyz, not a hex string
+    toks = _tokens_no_whitespace(lexer, "y = '61'xyz")
+    assert String.Affix not in [t for t, _ in toks]
+    assert (Text, "xyz") in toks
+
+
+@pytest.mark.parametrize("source, error", [
+    ("::badname\n", "::badname"),
+    (":: bogus x\n", ":: bogus"),
+    ("::\n", "::"),
+])
+def test_unknown_directive_is_one_error_token(lexer, source, error):
+    toks = _tokens_no_whitespace(lexer, source)
+    assert toks[0] == (Error, error)
+    assert [t for t, _ in toks].count(Error) == 1
+
+
+def test_known_directive_unaffected_by_unknown_rule(lexer):
+    toks = _tokens_no_whitespace(lexer, "::ROUTINE foo PUBLIC\n")
+    assert (Keyword.Namespace, "::") in toks
+    assert Error not in [t for t, _ in toks]

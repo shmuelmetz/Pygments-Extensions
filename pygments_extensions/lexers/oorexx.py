@@ -114,6 +114,25 @@ character-token per character; this port's version (see
 ``options_body`` below) fixes that rather than reproducing it. See
 ``tests/test_oorexx.py``'s cross-check regression tests for coverage
 of all of the above.
+
+Hex and binary strings (2026-10-24): the classic-Rexx lexer this was
+forked from never recognized the X and B suffixes, so ``'61'x`` came out
+as a string followed by a symbol ``x``. A string literal followed by X
+or B, not followed by a further symbol character (``'61'xyz`` is a
+string abutted to the symbol ``xyz``), is now one token for the body
+and a ``String.Affix`` token for the suffix -- the token type Pygments
+defines for string prefixes and suffixes. The body is ``String.Other``
+(codes, not text) when well formed and ``Error`` when the interpreter
+would reject it (Error 15). Well formed, as ooRexx 5.2 checks it (tried
+case by case, 2026-10-24): hex or binary digits in groups separated by
+blanks or tabs, none leading or trailing; the first group of any
+length, each later group an even number of hex digits (whole bytes) or
+a multiple of four binary digits (whole nibbles). The empty string is
+valid.
+
+Unknown directives (2026-10-24): ``::badname`` (or a bare ``::``) is one
+``Error`` token for the whole unknown directive, not one per colon with
+the name falling through as plain Text.
 """
 
 import re
@@ -121,6 +140,7 @@ import re
 from pygments.lexer import RegexLexer, bygroups, include, words
 from pygments.token import (
     Comment,
+    Error,
     Keyword,
     Name,
     Number,
@@ -157,6 +177,24 @@ _OPTIONS_SUBKW = (
 __all__ = ["OORexxLexer"]
 
 # A Rexx "symbol" (identifier) is not limited to plain word characters.
+# A hex or binary string's body, as ooRexx 5.2 accepts it: groups of
+# digits separated by blanks or tabs; after the first group, whole bytes
+# (hex) or whole nibbles (binary). See the module docstring.
+_HEX_BODY = re.compile(r"(?:[0-9a-f]+(?:[ \t]+(?:[0-9a-f]{2})+)*)?", re.IGNORECASE)
+_BINARY_BODY = re.compile(r"(?:[01]+(?:[ \t]+(?:[01]{4})+)*)?")
+
+
+def _radix_string(lexer, match):
+    """Tokens for a hex or binary string: the quoted body, as
+    String.Other when well formed and as Error otherwise, then the
+    suffix as String.Affix."""
+    literal, suffix = match.group(1), match.group(2)
+    body = _HEX_BODY if suffix.lower() == "x" else _BINARY_BODY
+    token = String.Other if body.fullmatch(literal[1:-1]) else Error
+    yield match.start(1), token, literal
+    yield match.start(2), String.Affix, suffix
+
+
 # Per IBM's TSO/E REXX Reference (the authoritative cross-dialect source
 # for classic-Rexx symbol rules, which ooRexx documents itself as
 # upwardly compatible with): a symbol consists of letters, digits, and
@@ -236,6 +274,12 @@ class OORexxLexer(RegexLexer):
             # "operator" include below, so the second "-" doesn't win
             # the single-hyphen operator rule first.
             (r"--.*", Comment.Single),
+            # Hex and binary strings: the suffix must not run into a
+            # further symbol character, or it starts an abutted symbol
+            (
+                r"(\"(?:[^\"\n]|\"\")*\"|'(?:[^'\n]|'')*')([xb])(?![\w@#$!?.])",
+                _radix_string,
+            ),
             (r'"', String, "string_double"),
             (r"'", String, "string_single"),
             (r"[0-9]+(\.[0-9]+)?(e[+-]?[0-9])?", Number),
@@ -279,6 +323,11 @@ class OORexxLexer(RegexLexer):
                 bygroups(Keyword.Namespace, Whitespace, Keyword.Declaration),
                 "options_body",
             ),
+            # Any other "::" is an unknown directive (::badname, or a bare
+            # "::"): one Error token for the whole thing, rather than one
+            # per colon with the name falling through as plain Text. Must
+            # follow the known-directive rules above.
+            (r"::(?:[ \t]*" + _SYMBOL + r")?", Error),
             # Dot-prefixed environment-directory symbol lookups: .array,
             # .string, .true, .false, .nil, .MyClass, etc. The dot means
             # "look this up in the environment directory", not "this is
