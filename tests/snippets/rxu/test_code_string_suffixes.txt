@@ -1,0 +1,21 @@
+---input---
+say "E9"U "(Man)(Bell)"U '41 E9 1F514'u "61"X "0110 0001"B
+
+---tokens---
+'say'         Keyword.Reserved
+' '           Text.Whitespace
+'"E9"'        Literal.String.Other
+'U'           Literal.String.Affix
+' '           Text.Whitespace
+'"(Man)(Bell)"' Literal.String.Other
+'U'           Literal.String.Affix
+' '           Text.Whitespace
+"'41 E9 1F514'" Literal.String.Other
+'u'           Literal.String.Affix
+' '           Text.Whitespace
+'"61"'        Literal.String.Other
+'X'           Literal.String.Affix
+' '           Text.Whitespace
+'"0110 0001"' Literal.String.Other
+'B'           Literal.String.Affix
+'\n'          Text.Whitespace

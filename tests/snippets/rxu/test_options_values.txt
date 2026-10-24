@@ -1,0 +1,18 @@
+---input---
+Options DefaultString TEXT
+options coercions promote
+
+---tokens---
+'Options'     Keyword.Reserved
+' '           Text.Whitespace
+'DefaultString' Keyword.Type
+' '           Text.Whitespace
+'TEXT'        Keyword.Constant
+'\n'          Text.Whitespace
+
+'options'     Keyword.Reserved
+' '           Text.Whitespace
+'coercions'   Keyword.Type
+' '           Text.Whitespace
+'promote'     Keyword.Constant
+'\n'          Text.Whitespace

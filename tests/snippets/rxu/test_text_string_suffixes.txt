@@ -1,0 +1,26 @@
+---input---
+x = "Ñandú"T || "abc"Y || "Ñandú"p || "Ñandú"g
+
+---tokens---
+'x'           Text
+' '           Text.Whitespace
+'='           Operator
+' '           Text.Whitespace
+'"Ñandú"'     Literal.String
+'T'           Literal.String.Affix
+' '           Text.Whitespace
+'||'          Operator
+' '           Text.Whitespace
+'"abc"'       Literal.String
+'Y'           Literal.String.Affix
+' '           Text.Whitespace
+'||'          Operator
+' '           Text.Whitespace
+'"Ñandú"'     Literal.String
+'p'           Literal.String.Affix
+' '           Text.Whitespace
+'||'          Operator
+' '           Text.Whitespace
+'"Ñandú"'     Literal.String
+'g'           Literal.String.Affix
+'\n'          Text.Whitespace

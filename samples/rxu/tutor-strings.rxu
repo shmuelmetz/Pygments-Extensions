@@ -1,0 +1,16 @@
+/* tutor-strings.rxu -- RXU (TUTOR) sample: the Y, P, G, T and U string
+ * suffixes, OPTIONS DEFAULTSTRING and COERCIONS, and the TUTOR built-in
+ * functions. */
+Options DefaultString TEXT
+Options Coercions Promote
+bell   = "(Bell)"U
+eAcute = "E9"U
+pair   = "(Man)(Bell)"U
+raw    = "abc"Y
+cps    = "Ñandú"P
+gs     = "Ñandú"G
+t      = "Ñandú"t
+Say StringType(t) Length(cps) Length(gs) C2U(eAcute) U2C("U+00E9")
+Say Bytes(raw) Codepoints(raw) Graphemes(raw) Text(raw)
+Say P2N("1F514") N2P("BELL") bell pair
+Say Translate(Strip(t))

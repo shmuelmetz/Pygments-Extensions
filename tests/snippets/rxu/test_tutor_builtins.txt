@@ -1,0 +1,42 @@
+---input---
+say StringType(t) C2U(e) U2C("U+00E9") P2N("1F514") N2P("BELL") Text(raw)
+
+---tokens---
+'say'         Keyword.Reserved
+' '           Text.Whitespace
+'StringType'  Name.Builtin
+'('           Operator
+'t'           Text
+')'           Operator
+' '           Text.Whitespace
+'C2U'         Name.Builtin
+'('           Operator
+'e'           Text
+')'           Operator
+' '           Text.Whitespace
+'U2C'         Name.Builtin
+'('           Operator
+'"'           Literal.String
+'U+00E9'      Literal.String
+'"'           Literal.String
+')'           Operator
+' '           Text.Whitespace
+'P2N'         Name.Builtin
+'('           Operator
+'"'           Literal.String
+'1F514'       Literal.String
+'"'           Literal.String
+')'           Operator
+' '           Text.Whitespace
+'N2P'         Name.Builtin
+'('           Operator
+'"'           Literal.String
+'BELL'        Literal.String
+'"'           Literal.String
+')'           Operator
+' '           Text.Whitespace
+'Text'        Name.Builtin
+'('           Operator
+'raw'         Text
+')'           Operator
+'\n'          Text.Whitespace

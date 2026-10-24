@@ -57,6 +57,7 @@ oorexx = "pygments_extensions.lexers.oorexx:OORexxLexer"
 pli = "pygments_extensions.lexers.pli:PLILexer"
 netrexx = "pygments_extensions.lexers.netrexx:NetRexxLexer"
 netrexx_pipelines = "pygments_extensions.lexers.netrexx_pipelines:NetRexxPipelinesLexer"
+rxu = "pygments_extensions.lexers.rxu:RxuLexer"
 
 # Not implemented yet -- see README.md for current-vs-future scope.
 # Uncomment each line as its module is actually written.

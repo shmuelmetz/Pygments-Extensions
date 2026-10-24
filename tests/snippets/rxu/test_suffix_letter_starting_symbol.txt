@@ -1,0 +1,13 @@
+---input---
+x = "abc"Yes
+
+---tokens---
+'x'           Text
+' '           Text.Whitespace
+'='           Operator
+' '           Text.Whitespace
+'"'           Literal.String
+'abc'         Literal.String
+'"'           Literal.String
+'Yes'         Text
+'\n'          Text.Whitespace
