@@ -1,0 +1,11 @@
+{
+  "dialect": "TSO/E REXX",
+  "version": "3.2",
+  "product": "z/OS TSO/E REXX",
+  "doc_keys": [
+    "ibm_tso_rexx_320_ref_2025",
+    "ibm_tso_rexx_320_users_2025"
+  ],
+  "lexer": "RexxTSOLexer",
+  "status": "planned"
+}

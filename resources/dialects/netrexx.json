@@ -1,0 +1,11 @@
+{
+  "dialect": "NetRexx",
+  "version": "4.x",
+  "product": "NetRexx",
+  "doc_keys": [
+    "rexxla_netrexx_402_langref_2022"
+  ],
+  "lexer": "NetRexxLexer",
+  "status": "implemented",
+  "entry_point": "netrexx"
+}

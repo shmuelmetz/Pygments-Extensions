@@ -1,0 +1,12 @@
+{
+  "dialect": "PL/I",
+  "version": "6.2",
+  "product": "Enterprise PL/I for z/OS",
+  "doc_keys": [
+    "ibm_pli_620_langref_2025",
+    "ibm_pli_620_progguide_2025"
+  ],
+  "lexer": "PLILexer",
+  "status": "implemented",
+  "entry_point": "pli"
+}

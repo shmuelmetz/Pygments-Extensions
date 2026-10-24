@@ -1,0 +1,11 @@
+{
+  "dialect": "RXU (TUTOR)",
+  "version": "0.7",
+  "product": "RXU, the Rexx Preprocessor for Unicode (TUTOR)",
+  "doc_keys": [
+    "blasco_tutor_07_2026"
+  ],
+  "lexer": "RxuLexer",
+  "status": "implemented",
+  "entry_point": "rxu"
+}

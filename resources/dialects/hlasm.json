@@ -1,0 +1,11 @@
+{
+  "dialect": "HLASM",
+  "version": "1.6.0",
+  "product": "High Level Assembler for z/OS & z/VM & z/VSE",
+  "doc_keys": [
+    "ibm_hlasm_160_langref_2021",
+    "ibm_hlasm_160_progguide_2021"
+  ],
+  "lexer": "HlasmLexer",
+  "status": "planned"
+}

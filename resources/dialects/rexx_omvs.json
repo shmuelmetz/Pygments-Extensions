@@ -1,0 +1,10 @@
+{
+  "dialect": "OMVS REXX",
+  "version": "3.2",
+  "product": "z/OS UNIX System Services REXX",
+  "doc_keys": [
+    "ibm_omvs_rexx_320_2025"
+  ],
+  "lexer": "RexxOMVSLexer",
+  "status": "planned"
+}

@@ -1,0 +1,11 @@
+{
+  "dialect": "NetRexx Pipelines",
+  "version": "5.x",
+  "product": "NetRexx Pipelines (njpipes)",
+  "doc_keys": [
+    "rexxla_netrexx_510_pipelines"
+  ],
+  "lexer": "NetRexxPipelinesLexer",
+  "status": "implemented",
+  "entry_point": "netrexx_pipelines"
+}

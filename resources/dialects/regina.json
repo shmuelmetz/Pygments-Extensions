@@ -1,0 +1,10 @@
+{
+  "dialect": "Regina REXX",
+  "version": "3.x",
+  "product": "Regina REXX",
+  "doc_keys": [
+    "hessling_regina_397_2025"
+  ],
+  "lexer": "ReginaRexxLexer",
+  "status": "planned"
+}

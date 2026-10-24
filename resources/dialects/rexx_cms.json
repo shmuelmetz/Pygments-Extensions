@@ -1,0 +1,11 @@
+{
+  "dialect": "CMS REXX",
+  "version": "7.4",
+  "product": "REXX/VM",
+  "doc_keys": [
+    "ibm_cms_rexx_740_ref_2024",
+    "ibm_cms_rexx_740_users_2024"
+  ],
+  "lexer": "RexxCMSLexer",
+  "status": "planned"
+}

@@ -1,0 +1,10 @@
+{
+  "dialect": "System REXX",
+  "version": "3.2",
+  "product": "System REXX (AXREXX)",
+  "doc_keys": [
+    "ibm_system_rexx_320_ch31_2025"
+  ],
+  "lexer": "RexxSystemLexer",
+  "status": "planned"
+}

@@ -1,0 +1,11 @@
+{
+  "dialect": "ooRexx",
+  "version": "5.x",
+  "product": "Open Object Rexx",
+  "doc_keys": [
+    "rexxla_oorexx_520_ref_2026"
+  ],
+  "lexer": "OORexxLexer",
+  "status": "implemented",
+  "entry_point": "oorexx"
+}
